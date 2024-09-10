@@ -4,35 +4,32 @@ ImGizmo is a Dear ImGui extension for adding 3D manipulation gizmos to the immed
 
 ## Functionality
 
-- 3D Context
-    - [ ] Translate Gizmo
-    - [ ] Arrow Gizmo
-    - [ ] Camera Orientation Gizmo
-    - [ ] Point Gizmo
-    - [ ] Custom 3D Gizmo Creation
-    - [ ] Text Gizmo
+### 3D Context
 
-- 2D Context
-    - [ ] Icons
-    - [ ] Text
-    - [ ] Full ImGui Support
-    - [ ] Custom 2D Gizmo Creation
+Currenly supported gizmos:
+
+- [ ] Translate Gizmo
+- [ ] Arrow Gizmo
+- [ ] Camera Orientation Gizmo
+- [ ] Point Gizmo
+- [ ] Custom 3D Gizmo Creation
+
+### 2D Context
+
+Currenly supported gizmos:
+
+- [ ] Icons
+- [ ] Text
+- [ ] Custom 2D Gizmo Creation
+- [ ] Full ImGui Support
 
 ## Usage
 
----
-
 ## Config
-
----
 
 ## Contribution
 
----
-
 ## License
 
----
-
-ImGimzo, just like Dear ImGui makes use of the MIT license see LICENSE.txt for more information
+ImGizmo, just like Dear ImGui makes use of the MIT license see LICENSE.txt for more information
 
