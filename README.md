@@ -23,6 +23,14 @@ Currenly supported gizmos:
 - [ ] Custom 2D Gizmo Creation
 - [ ] Full ImGui Support
 
+### Support
+
+- [ ] Multiscreen/Multicontext rendering
+- [ ] Customization (Checkout config for what and how you can customize)
+- [ ] Shareable custom gizmo format
+- [ ] LH matrices to RH matrices conversion
+- [ ] Inverse Z Axis handling
+
 ## Usage
 
 ## Config
