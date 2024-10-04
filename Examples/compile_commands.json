@@ -1,0 +1,6 @@
+[
+{
+  "directory": "C:\\Users\\Cornee.Nieuwenhuis\\projects\\ImGizmo\\Examples",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/std:c++17", "/I..", "/EHsc", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1\\679b3d982f6c4618856026b5e621200b\\include", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1\\679b3d982f6c4618856026b5e621200b\\include\\imgui", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1\\679b3d982f6c4618856026b5e621200b\\include\\backends", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1\\679b3d982f6c4618856026b5e621200b\\include\\misc\\cpp", "/DNDEBUG", "/Fobuild\\.objs\\ImGimzo\\windows\\x64\\release\\main.cpp.obj", "main.cpp"],
+  "file": "main.cpp"
+}]
