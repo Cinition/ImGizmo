@@ -1,11 +1,10 @@
 set_languages("cxx17")
 
-add_requires("imgui v1.91.1-docking", {configs = {opengl3 = true, sdl2 = true}})
-add_requires("glad")
-add_requires("libsdl")
+add_requires("imgui v1.91.1-docking", {configs = {opengl3 = true, glfw = true}})
+add_requires("glad", "glfw")
 
 target("ImGimzo")
-    set_kind("console")
+    set_kind("binary")
     add_files("*.cpp")
     add_includedirs( "../" )
-    add_packages("imgui", "libsdl", "glad")
+    add_packages("imgui", "glfw", "glad")
