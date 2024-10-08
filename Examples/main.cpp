@@ -203,14 +203,16 @@ int main(int argc, char** argv) {
             glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
             glBindVertexArray(VAO);
+
             glm::mat4 modelMatrix = glm::mat4(1.f);
             modelMatrix = glm::translate(modelMatrix, cube1.position);
             int modelMatrixLocation = glGetUniformLocation(shader.ID, "modelMatrix");
-            glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
+            glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+            glBindVertexArray(0);
         }
-        glBindVertexArray(0);
 
         glfwSwapBuffers(window);
     }

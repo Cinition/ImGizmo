@@ -15,6 +15,14 @@ Go to the installation guide of [xmake](https://xmake.io/#/guide/installation) a
 ### Building and Running xmake
 Now that you have xmake installed you can now just run ``xmake`` to install all dependencies of the examples project and build the project.
 
+```
+// build the project
+xmake
+
+// run the project
+xmake run
+```
+
 ## License
 
 ImGizmo, just like Dear ImGui makes use of the MIT license see LICENSE.txt for more information
