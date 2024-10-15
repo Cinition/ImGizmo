@@ -265,8 +265,17 @@ int main(int argc, char** argv) {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
+            static bool showDemoWindow = false;
+            if(showDemoWindow) {
+                ImGui::ShowDemoWindow(&showDemoWindow);
+            }
+
             ImGui::SetWindowSize({300.f , 400.f});
             ImGui::Begin("ImGizmo Demo");
+
+            if(ImGui::Button("Toggle Demo")) {
+                showDemoWindow = !showDemoWindow;
+            }
 
             ImGui::SeparatorText("Cube");
             ImGui::Text("Position:");
