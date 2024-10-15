@@ -1,6 +1,0 @@
-[
-{
-  "directory": "C:\\Users\\Cornee.Nieuwenhuis\\projects\\ImGizmo\\Examples",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.41.34120\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/std:c++17", "/I..", "/DGLFW_INCLUDE_NONE", "/EHsc", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1-docking\\da9dff88df384525a287ca12b84f7635\\include", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1-docking\\da9dff88df384525a287ca12b84f7635\\include\\imgui", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1-docking\\da9dff88df384525a287ca12b84f7635\\include\\backends", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\i\\imgui\\v1.91.1-docking\\da9dff88df384525a287ca12b84f7635\\include\\misc\\cpp", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\g\\glfw\\3.4\\fc47358da159466996f7d289b4cf1b4e\\include", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\g\\glad\\v0.1.36\\b918abab79c04749ba8b220ab08bfbb8\\include", "/IC:\\Users\\Cornee.Nieuwenhuis\\AppData\\Local\\.xmake\\packages\\g\\glm\\1.0.1\\788496219b2d40629f92bac6907b6bba\\include", "/Fobuild\\.objs\\ImGimzo\\windows\\x64\\debug\\main.cpp.obj", "main.cpp"],
-  "file": "main.cpp"
-}]
