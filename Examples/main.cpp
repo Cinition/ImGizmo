@@ -141,6 +141,7 @@ int main(int argc, char** argv) {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
 
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -180,11 +181,14 @@ int main(int argc, char** argv) {
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
 
+    bool handleMouseInput = false;
+
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 150");
+    ImGui_ImplOpenGL3_Init("#version 460");
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
         if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
@@ -195,22 +199,18 @@ int main(int argc, char** argv) {
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Render ImGui
+        glm::mat4 view = glm::mat4(1.f);
+        glm::mat4 proj = glm::mat4(1.f);
+        view = glm::translate(view, glm::vec3(0.f, 0.f, -10.f));
+        proj = glm::perspective(glm::radians(45.f), 1.778f, 0.1f, 100.f);
+
+        // Update scene
         {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
+            ImGuiIO& io = ImGui::GetIO();
+            handleMouseInput = !io.WantCaptureMouse;
 
-            ImGui::Begin("ImGizmo Demo");
+            glm::mat4 rot = glm::mat4(1.f);
 
-            ImGui::End();
-
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
-
-        // Render Scene
-        {
             // Mouse camera rotation
             static glm::vec2 rotation     = glm::vec2(0.f);
             static glm::vec2 lastMousePos = glm::vec2(0.f);
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
             double xPos, yPos;
             glfwGetCursorPos(window, &xPos, &yPos);
             glm::vec2 mousePos = glm::vec2(xPos, yPos);
-            {
+            if(handleMouseInput) {
                 if( glfwGetMouseButton(window, 0) == GLFW_PRESS) {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
                     glm::vec2 relativePos = lastMousePos - mousePos;
@@ -228,20 +228,16 @@ int main(int argc, char** argv) {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                 }
             }
-            lastMousePos.x = xPos;
-            lastMousePos.y = yPos;
+            lastMousePos.x = static_cast<float>(xPos);
+            lastMousePos.y = static_cast<float>(yPos);
 
-            glUseProgram(shader.ID);
-
-            glm::mat4 rot = glm::mat4(1.f);
-            glm::mat4 view = glm::mat4(1.f);
-            glm::mat4 proj = glm::mat4(1.f);
             rot = glm::rotate(rot, rotation.y, glm::vec3(1.f, 0.f, 0.f));
             rot = glm::rotate(rot, rotation.x, glm::vec3(0.f, 1.f, 0.f));
-            view = glm::translate(view, glm::vec3(0.f, 0.f, -10.f));
             view = view * rot;
-            proj = glm::perspective(glm::radians(45.f), 1.778f, 0.1f, 100.f);
+        }
 
+        // Render Scene
+        {
             int viewMatrixLocation = glGetUniformLocation(shader.ID, "view");
             glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -250,14 +246,75 @@ int main(int argc, char** argv) {
 
             glm::mat4 modelMatrix = glm::mat4(1.f);
             modelMatrix = glm::translate(modelMatrix, cube1.position);
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.x), glm::vec3(1.f, 0.f, 0.f));
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.y), glm::vec3(0.f, 1.f, 0.f));
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.z), glm::vec3(0.f, 0.f, 1.f));
+            modelMatrix = glm::scale(modelMatrix, cube1.scale);
             int modelMatrixLocation = glGetUniformLocation(shader.ID, "modelMatrix");
             glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
+            glUseProgram(shader.ID);
             glBindVertexArray(VAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
             glBindVertexArray(0);
         }
 
+        // Render ImGui
+        {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            ImGui::SetWindowSize({300.f , 400.f});
+            ImGui::Begin("ImGizmo Demo");
+
+            ImGui::SeparatorText("Cube");
+            ImGui::Text("Position:");
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("X:##Pos", ImGuiDataType_Float, &cube1.position.x, 0.1f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Y:##Pos", ImGuiDataType_Float, &cube1.position.y, 0.1f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Z:##Pos", ImGuiDataType_Float, &cube1.position.z, 0.1f);
+            ImGui::Dummy({1.f, 10.f});
+
+            ImGui::Text("Rotation:");
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("X:##Rot", ImGuiDataType_Float, &cube1.rotation.x, 1.f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Y:##Rot", ImGuiDataType_Float, &cube1.rotation.y, 1.f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Z:##Rot", ImGuiDataType_Float, &cube1.rotation.z, 1.f);
+            ImGui::Dummy({1.f, 10.f});
+
+            ImGui::Text("Scale:");
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("X:##Scl", ImGuiDataType_Float, &cube1.scale.x, 0.1f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Y:##Scl", ImGuiDataType_Float, &cube1.scale.y, 0.1f);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100.f);
+            ImGui::DragScalar("Z:##Scl", ImGuiDataType_Float, &cube1.scale.z, 0.1f);
+            ImGui::Dummy({1.f, 10.f});
+
+            if(ImGui::Button("Reset Transform")) {
+                cube1.position = glm::vec3(0.f);
+                cube1.rotation = glm::vec3(0.f);
+                cube1.scale = glm::vec3(1.f);
+            }
+
+            ImGui::SeparatorText("ImGizmo");
+
+            ImGui::End();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
         glfwSwapBuffers(window);
     }
 
