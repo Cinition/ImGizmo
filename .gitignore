@@ -1,0 +1,13 @@
+# Xmake cache
+Examples/.xmake/
+Examples/build/
+
+# MacOS Cache
+Examples/.DS_Store
+
+# clang cache
+Examples/.cache
+
+# Random Files and Folder
+.idea
+Examples/compile_commands.json
