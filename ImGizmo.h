@@ -15,6 +15,6 @@ namespace IMGIZMO_NAMESPACE {
     ImGizmoContext* GetCurrentContext();
     void SetCurrentContext(ImGizmoContext* context);
 
-    void Begin(const char* _id, float* _view, float* _proj);
+    bool Begin(const char* _id, float* _view, float* _proj, const ImVec2& _size = ImVec2(0,0));
     void End();
 }
