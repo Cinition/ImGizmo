@@ -72,4 +72,8 @@ namespace IMGIZMO_NAMESPACE {
 
         return true;
     }
+
+    void End() {
+
+    }
 };
