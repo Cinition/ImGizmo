@@ -102,10 +102,15 @@ namespace IMGIZMO_NAMESPACE {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
-        // 1 => Calculate/Create hitbox around translation gizmo.
-        // 2 => Detect mouse interaction (hovering & pressing).
-        // 3 => Push data to space context for rendering at end.
-        GImGizmo->scopeContext.drawTranslation = true;
+        for(int i = 0; i < 3; ++i) {
+            // Create axis aligned bounding box, for fast coarse initial check
+            // Create axis bounding box, for slower accurate secondary check
+        }
+        
+        // Push translation gizmo bounding boxes data
+        // Push translation gizmo rending data
+        
+        GImGizmo->scopeContext.drawTranslation = true
 
         return false;
     }
