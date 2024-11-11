@@ -10,7 +10,6 @@ struct ImGizmoMatrix {
     };
 
     ImGizmoMatrix() {
-        // setup identity matrix
         m4x4[0][1] = m4x4[0][2] = m4x4[0][3] =
         m4x4[1][0] = m4x4[1][2] = m4x4[1][3] =
         m4x4[2][0] = m4x4[2][1] = m4x4[2][3] =
@@ -44,9 +43,12 @@ struct ImGizmoSpace {
     ImRect frameRect;
     ImGizmoMatrix viewMatrix;
     ImGizmoMatrix projMatrix;
+
+    // TODO: rework this into an actual system
+    bool drawTranslation;
 };
 
 struct ImGizmoContext {
-    std::queue<ImGizmoSpace> gizmoSpaces;
-    // add context wide styling variables (like imgui)
+    ImGizmoSpace currentSpace;
+    // TODO: add global styling options, like in imgui
 };
