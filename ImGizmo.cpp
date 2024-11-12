@@ -45,18 +45,18 @@ namespace IMGIZMO_NAMESPACE {
 
     bool Begin(const char *_id, float *_view, float *_proj, const ImVec2& _size) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
         ImGizmoContext& gz = *GImGizmo;
 
         const ImGuiID ID = window->GetID(_id);
-        ImGizmoSpace* current = IM_NEW(ImGizmoSpace);
-        gz.currentSpace = current;
+        ImGizmoSpace& current = gz.currentSpace;
 
-        current->projMatrix = _proj;
-        current->viewMatrix = _view;
+        current.initialized = true;
+        current.projMatrix = _proj;
+        current.viewMatrix = _view;
 
         ImVec2 frameSize = _size;
         if(fabsf(frameSize.x + frameSize.y) < 0.0001f) {
@@ -64,9 +64,9 @@ namespace IMGIZMO_NAMESPACE {
             frameSize = window->ContentSize;
         }
 
-        current->frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + frameSize);
-        ImGui::ItemSize(current->frameRect);
-        if (!ImGui::ItemAdd(current->frameRect, current->ID, &current->frameRect)) {
+        current.frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + frameSize);
+        ImGui::ItemSize(current.frameRect);
+        if (!ImGui::ItemAdd(current.frameRect, current.ID, &current.frameRect)) {
             return false;
         }
 
@@ -75,23 +75,22 @@ namespace IMGIZMO_NAMESPACE {
 
     void End() {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
 
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
         ImGizmoContext& gz = *GImGizmo;
 
         ImDrawList& drawList = *window->DrawList;
-        ImGizmoSpace* current = &gz.currentSpace;
+        ImGizmoSpace& current = gz.currentSpace;
 
-        ImGui::PushClipRect(current->frameRect.Min, current->frameRect.Max, true);
+        ImGui::PushClipRect(current.frameRect.Min, current.frameRect.Max, true);
 
         //TODO: add the rendering of object
 
 
         // Reset current ImGizmo space
-        IM_DELETE(&gz.currentSpace);
-        gz.currentSpace = nullptr;
+        gz.currentSpace.initialized = false;
     }
 
     // -----------------
@@ -100,38 +99,23 @@ namespace IMGIZMO_NAMESPACE {
 
     bool DrawTranslation(const char* _id, float* _matrix) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
+
+        ImGizmoMatrix matrix = ImGizmoMatrix(_matrix);
+
+        // TODO: Move to global context styling
+        const float handleHeight = 10.f;
+        const float handleWidth = 2.f;
 
         for(int i = 0; i < 3; ++i) {
             // Create axis aligned bounding box, for fast coarse initial check
             // Create axis bounding box, for slower accurate secondary check
         }
-        
+
         // Push translation gizmo bounding boxes data
         // Push translation gizmo rending data
-        
-        GImGizmo->scopeContext.drawTranslation = true
 
-        return false;
-    }
-
-    bool DrawScaling(const char* _id, float* _matrix) {
-        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
-
-        return false;
-    }
-
-    bool DrawRotation(const char* _id, float* _matrix) {
-        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
-
-        return false;
-    }
-
-    bool DrawPoint(const char* _id, float* _matrix) {
-        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
+        GImGizmo->currentSpace.drawTranslation = true;
 
         return false;
     }

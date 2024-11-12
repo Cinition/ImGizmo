@@ -44,6 +44,8 @@ struct ImGizmoSpace {
     ImGizmoMatrix viewMatrix;
     ImGizmoMatrix projMatrix;
 
+    bool initialized;
+
     // TODO: rework this into an actual system
     bool drawTranslation;
 };
