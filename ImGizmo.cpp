@@ -1,8 +1,10 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include <cstdio>
 #endif
 
 #include "ImGizmo.h"
+#include "ImGizmo_Math.h"
 #include "ImGizmo_Internal.h"
 
 #include "imgui.h"
@@ -16,9 +18,15 @@ ImGizmoContext* GImGizmo = nullptr;
 void InitializeContext(ImGizmoContext* context) {};
 
 namespace IMGIZMO_NAMESPACE {
+
+    // ---------------
+    // CONTEXT SECTION
+    // ---------------
+
     ImGizmoContext* CreateContext() {
         ImGizmoContext* context = IM_NEW(ImGizmoContext)();
         InitializeContext(context);
+        context->currentSpace.initialized = false;
         if (GImGizmo == nullptr) {
             SetCurrentContext(context);
         }
@@ -43,51 +51,47 @@ namespace IMGIZMO_NAMESPACE {
         GImGizmo = context;
     }
 
-    bool Begin(const char *_id, float *_view, float *_proj, const ImVec2& _size) {
+    // -----------------
+    // FUNCTIONS SECTION
+    // -----------------
+
+    bool Begin(const char* _id, float* _view, float* _proj, const ImVec2& _size) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
         ImGuiContext& g = *GImGui;
-        ImGuiWindow* window = g.CurrentWindow;
         ImGizmoContext& gz = *GImGizmo;
-
-        const ImGuiID ID = window->GetID(_id);
         ImGizmoSpace& current = gz.currentSpace;
 
-        current.initialized = true;
-        current.projMatrix = _proj;
-        current.viewMatrix = _view;
+        const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs |
+                            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+                            ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-        ImVec2 frameSize = _size;
-        if(fabsf(frameSize.x + frameSize.y) < 0.0001f) {
-            // We take the full size of the window if no size (or a zero vector) is given
-            frameSize = window->ContentSize;
+        ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
+
+        if(ImGui::Begin(_id, NULL, flags)) {
+            ImGuiWindow* window = g.CurrentWindow;
+
+            current.initialized = true;
+            current.viewMatrix = _view;
+            current.projMatrix = _proj;
+            current.drawList = window->DrawList;
+
+            ImGui::End();
         }
 
-        current.frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + frameSize);
-        ImGui::ItemSize(current.frameRect);
-        if (!ImGui::ItemAdd(current.frameRect, current.ID, &current.frameRect)) {
-            return false;
-        }
-
-        return true;
+        return current.initialized;
     }
 
     void End() {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
 
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
         ImGizmoContext& gz = *GImGizmo;
-
-        ImDrawList& drawList = *window->DrawList;
-        ImGizmoSpace& current = gz.currentSpace;
-
-        ImGui::PushClipRect(current.frameRect.Min, current.frameRect.Max, true);
-
-        //TODO: add the rendering of object
-
 
         // Reset current ImGizmo space
         gz.currentSpace.initialized = false;
@@ -99,13 +103,17 @@ namespace IMGIZMO_NAMESPACE {
 
     bool DrawTranslation(const char* _id, float* _matrix) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
         ImGizmoMatrix matrix = ImGizmoMatrix(_matrix);
 
         // TODO: Move to global context styling
         const float handleHeight = 10.f;
         const float handleWidth = 2.f;
+
+        const ImGizmoMatrix& viewMatrix = GImGizmo->currentSpace.viewMatrix;
+        const ImGizmoMatrix& projMatrix = GImGizmo->currentSpace.projMatrix;
+        const ImGizmoMatrix modelView = viewMatrix * projMatrix;
 
         for(int i = 0; i < 3; ++i) {
             // Create axis aligned bounding box, for fast coarse initial check
@@ -115,7 +123,14 @@ namespace IMGIZMO_NAMESPACE {
         // Push translation gizmo bounding boxes data
         // Push translation gizmo rending data
 
-        GImGizmo->currentSpace.drawTranslation = true;
+        //TODO: move rendering to end, because of hovering. (We can't know if something is behind or worse infront when we call a draw function);
+        ImDrawList& drawList = *GImGui->CurrentWindow->DrawList;
+
+        // Draw debug point
+        ImGizmoVec point1 = ImGizmoVec(1.f, -3.f, 0.f, 0.f).Transform(modelView);
+        point1.x = point1.x / point1.w;
+        point1.y = point1.y / point1.w;
+        //drawList.AddCircle({point1.x, point1.y}, 1.f, ImGui::GetColorU32({0.f, 0.f, 1.f, 1.f}));
 
         return false;
     }
