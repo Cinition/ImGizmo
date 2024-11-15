@@ -8,6 +8,7 @@ struct ImGizmoSpace {
     ImGizmoMatrix viewMatrix;
     ImGizmoMatrix projMatrix;
     ImDrawList* drawList;
+    ImRect frameRect;
 
     bool initialized;
 };

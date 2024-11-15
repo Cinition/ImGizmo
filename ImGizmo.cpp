@@ -10,6 +10,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <cmath>
+#include <algorithm>
 
 #ifndef GImGizmo
 ImGizmoContext* GImGizmo = nullptr;
@@ -66,7 +67,7 @@ namespace IMGIZMO_NAMESPACE {
         const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                             ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs |
                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-                            ImGuiWindowFlags_NoBringToFrontOnFocus;
+                            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
 
         ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
         ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
@@ -78,6 +79,7 @@ namespace IMGIZMO_NAMESPACE {
             current.viewMatrix = _view;
             current.projMatrix = _proj;
             current.drawList = window->DrawList;
+            current.frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + ImGui::GetMainViewport()->Size);
 
             ImGui::End();
         }
@@ -124,13 +126,21 @@ namespace IMGIZMO_NAMESPACE {
         // Push translation gizmo rending data
 
         //TODO: move rendering to end, because of hovering. (We can't know if something is behind or worse infront when we call a draw function);
-        ImDrawList& drawList = *GImGui->CurrentWindow->DrawList;
+        ImDrawList& drawList = *GImGizmo->currentSpace.drawList;
 
         // Draw debug point
-        ImGizmoVec point1 = ImGizmoVec(1.f, -3.f, 0.f, 0.f).Transform(modelView);
-        point1.x = point1.x / point1.w;
-        point1.y = point1.y / point1.w;
-        //drawList.AddCircle({point1.x, point1.y}, 1.f, ImGui::GetColorU32({0.f, 0.f, 1.f, 1.f}));
+        ImGizmoVec point1 = ImGizmoVec(1.f, 2.f, 10.f, 0.f);
+        point1.Transform(viewMatrix);
+        point1.Transform(projMatrix);
+
+        //point1.x += GImGizmo->currentSpace.frameRect.Max.x * 0.5f;
+        //point1.y += GImGizmo->currentSpace.frameRect.Max.y * 0.5f;
+
+        const auto& max = GImGizmo->currentSpace.frameRect.Max;
+        point1.x = (point1.x * 0.5f * max.y);
+        point1.y = (point1.y * 0.5f * max.x);
+
+        drawList.AddCircle({point1.x, point1.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
 
         return false;
     }

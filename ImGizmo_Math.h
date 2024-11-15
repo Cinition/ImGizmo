@@ -44,7 +44,7 @@ struct ImGizmoVec {
         w = _w;
     }
 
-    ImGizmoVec Transform(ImGizmoMatrix _matrix);
+    ImGizmoVec Transform(const ImGizmoMatrix& _matrix);
 };
 
 struct ImGizmoMatrix {
@@ -99,13 +99,19 @@ struct ImGizmoMatrix {
     }
 };
 
-ImGizmoVec ImGizmoVec::Transform(ImGizmoMatrix _matrix) {
+ImGizmoVec ImGizmoVec::Transform(const ImGizmoMatrix& _matrix) {
     ImGizmoVec out;
 
-    out.x = this->x * _matrix.m4x4[0][0] + this->y * _matrix.m4x4[1][0] + this->z * _matrix.m4x4[2][0] + this->w * _matrix.m4x4[3][0];
-    out.y = this->x * _matrix.m4x4[0][1] + this->y * _matrix.m4x4[1][1] + this->z * _matrix.m4x4[2][1] + this->w * _matrix.m4x4[3][1];
-    out.z = this->x * _matrix.m4x4[0][2] + this->y * _matrix.m4x4[1][2] + this->z * _matrix.m4x4[2][2] + this->w * _matrix.m4x4[3][2];
-    out.w = this->x * _matrix.m4x4[0][3] + this->y * _matrix.m4x4[1][3] + this->z * _matrix.m4x4[2][3] + this->w * _matrix.m4x4[3][3];
+    out.x = this->x * _matrix.m4x4[0][0] + this->y * _matrix.m4x4[1][0] + this->z * _matrix.m4x4[2][0] + _matrix.m4x4[3][0];
+    out.y = this->x * _matrix.m4x4[0][1] + this->y * _matrix.m4x4[1][1] + this->z * _matrix.m4x4[2][1] + _matrix.m4x4[3][1];
+    out.z = this->x * _matrix.m4x4[0][2] + this->y * _matrix.m4x4[1][2] + this->z * _matrix.m4x4[2][2] + _matrix.m4x4[3][2];
+    out.w = this->x * _matrix.m4x4[0][3] + this->y * _matrix.m4x4[1][3] + this->z * _matrix.m4x4[2][3] + _matrix.m4x4[3][3];
+
+    if(out.w != 1.f) {
+        out.x /= out.w;
+        out.y /= out.w;
+        out.z /= out.w;
+    }
 
     this->x = out.x;
     this->y = out.y;
