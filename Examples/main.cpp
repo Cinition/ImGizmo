@@ -181,7 +181,10 @@ int main(int argc, char** argv) {
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
 
+    ImGizmo::CreateContext();
+
     bool handleMouseInput = false;
+    bool renderScene = false;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -238,25 +241,28 @@ int main(int argc, char** argv) {
 
         // Render Scene
         {
-            int viewMatrixLocation = glGetUniformLocation(shader.ID, "view");
-            glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
+            if(renderScene)
+            {
+                int viewMatrixLocation = glGetUniformLocation(shader.ID, "view");
+                glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
 
-            int projectionMatrixLocation = glGetUniformLocation(shader.ID, "projection");
-            glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
+                int projectionMatrixLocation = glGetUniformLocation(shader.ID, "projection");
+                glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
 
-            glm::mat4 modelMatrix = glm::mat4(1.f);
-            modelMatrix = glm::translate(modelMatrix, cube1.position);
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.x), glm::vec3(1.f, 0.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.y), glm::vec3(0.f, 1.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.z), glm::vec3(0.f, 0.f, 1.f));
-            modelMatrix = glm::scale(modelMatrix, cube1.scale);
-            int modelMatrixLocation = glGetUniformLocation(shader.ID, "modelMatrix");
-            glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                glm::mat4 modelMatrix = glm::mat4(1.f);
+                modelMatrix = glm::translate(modelMatrix, cube1.position);
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.x), glm::vec3(1.f, 0.f, 0.f));
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.y), glm::vec3(0.f, 1.f, 0.f));
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.z), glm::vec3(0.f, 0.f, 1.f));
+                modelMatrix = glm::scale(modelMatrix, cube1.scale);
+                int modelMatrixLocation = glGetUniformLocation(shader.ID, "modelMatrix");
+                glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-            glUseProgram(shader.ID);
-            glBindVertexArray(VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            glBindVertexArray(0);
+                glUseProgram(shader.ID);
+                glBindVertexArray(VAO);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+                glBindVertexArray(0);
+            }
         }
 
         // Render ImGui
@@ -270,11 +276,59 @@ int main(int argc, char** argv) {
                 ImGui::ShowDemoWindow(&showDemoWindow);
             }
 
+            glm::mat4 modelMatrix = glm::mat4(1.f);
+            modelMatrix = glm::translate(modelMatrix, cube1.position);
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.x), glm::vec3(1.f, 0.f, 0.f));
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.y), glm::vec3(0.f, 1.f, 0.f));
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.z), glm::vec3(0.f, 0.f, 1.f));
+            modelMatrix = glm::scale(modelMatrix, cube1.scale);
+
+            if(ImGizmo::Begin("ImGizmo Space",glm::value_ptr(view), glm::value_ptr(proj))) {
+
+                glm::vec4 point1 = {0.5f, 0.5f, 0.5f, 1.0f};
+                point1 = modelMatrix *  point1;
+                ImGizmo::DrawTranslation("Cube Translation", &point1.x, &point1.y, &point1.z);
+
+                glm::vec4 point2 = {-0.5f, 0.5f, 0.5f, 1.0f};
+                point2 = modelMatrix *  point2;
+                ImGizmo::DrawTranslation("Cube Translation", &point2.x, &point2.y, &point2.z);
+
+                glm::vec4 point3 = {-0.5f, 0.5f, -0.5f, 1.0f};
+                point3 = modelMatrix *  point3;
+                ImGizmo::DrawTranslation("Cube Translation", &point3.x, &point3.y, &point3.z);
+
+                glm::vec4 point4 = {0.5f, 0.5f, -0.5f, 1.0f};
+                point4 = modelMatrix *  point4;
+                ImGizmo::DrawTranslation("Cube Translation", &point4.x, &point4.y, &point4.z);
+
+                glm::vec4 point5 = {0.5f, -0.5f, 0.5f, 1.0f};
+                point5 = modelMatrix *  point5;
+                ImGizmo::DrawTranslation("Cube Translation", &point5.x, &point5.y, &point5.z);
+
+                glm::vec4 point6 = {-0.5f, -0.5f, 0.5f, 1.0f};
+                point6 = modelMatrix *  point6;
+                ImGizmo::DrawTranslation("Cube Translation", &point6.x, &point6.y, &point6.z);
+
+                glm::vec4 point7 = {-0.5f, -0.5f, -0.5f, 1.0f};
+                point7 = modelMatrix *  point7;
+                ImGizmo::DrawTranslation("Cube Translation", &point7.x, &point7.y, &point7.z);
+
+                glm::vec4 point8 = {0.5f, -0.5f, -0.5f, 1.0f};
+                point8 = modelMatrix *  point8;
+                ImGizmo::DrawTranslation("Cube Translation", &point8.x, &point8.y, &point8.z);
+
+                ImGizmo::End();
+            }
+
             ImGui::SetWindowSize({300.f , 400.f});
             ImGui::Begin("ImGizmo Demo");
 
-            if(ImGui::Button("Toggle Demo")) {
+            if(ImGui::Button("Toggle ImGui Debugging")) {
                 showDemoWindow = !showDemoWindow;
+            }
+
+            if(ImGui::Button("Toggle Cube")) {
+                renderScene = !renderScene;
             }
 
             ImGui::SeparatorText("Cube");
@@ -317,8 +371,6 @@ int main(int argc, char** argv) {
                 cube1.scale = glm::vec3(1.f);
             }
 
-            ImGui::SeparatorText("ImGizmo");
-
             ImGui::End();
 
             ImGui::Render();
@@ -331,6 +383,7 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
 
+    ImGizmo::DestroyContext();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
