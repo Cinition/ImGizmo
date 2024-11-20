@@ -20,6 +20,7 @@ namespace IMGIZMO_NAMESPACE {
     void AttachNextSpaceToViewport(ImGuiViewport* _viewport);
 
     bool DrawTranslation(const char* _id, float* _matrix);
+    bool DrawTranslation(const char* _id, float* _x, float* _y, float* _z);
     bool DrawScaling(const char* _id, float* _matrix);
     bool DrawRotation(const char* _id, float* _matrix);
     bool DrawPoint(const char* _id, float* _matrix);

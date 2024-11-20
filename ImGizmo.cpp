@@ -1,7 +1,7 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include <cstdio>
 #endif
+#include <cstdio>
 
 #include "ImGizmo.h"
 #include "ImGizmo_Math.h"
@@ -115,7 +115,6 @@ namespace IMGIZMO_NAMESPACE {
 
         const ImGizmoMatrix& viewMatrix = GImGizmo->currentSpace.viewMatrix;
         const ImGizmoMatrix& projMatrix = GImGizmo->currentSpace.projMatrix;
-        const ImGizmoMatrix modelView = viewMatrix * projMatrix;
 
         for(int i = 0; i < 3; ++i) {
             // Create axis aligned bounding box, for fast coarse initial check
@@ -125,23 +124,33 @@ namespace IMGIZMO_NAMESPACE {
         // Push translation gizmo bounding boxes data
         // Push translation gizmo rending data
 
-        //TODO: move rendering to end, because of hovering. (We can't know if something is behind or worse infront when we call a draw function);
+        //TODO: move rendering to end, because of depth. (We can't know if something is behind or worse infront when we call a draw function);
         ImDrawList& drawList = *GImGizmo->currentSpace.drawList;
 
         // Draw debug point
-        ImGizmoVec point1 = ImGizmoVec(1.f, 2.f, 10.f, 0.f);
+        ImGizmoVec point1 = matrix.Pos();
         point1.Transform(viewMatrix);
         point1.Transform(projMatrix);
 
-        //point1.x += GImGizmo->currentSpace.frameRect.Max.x * 0.5f;
-        //point1.y += GImGizmo->currentSpace.frameRect.Max.y * 0.5f;
-
         const auto& max = GImGizmo->currentSpace.frameRect.Max;
-        point1.x = (point1.x * 0.5f * max.y);
-        point1.y = (point1.y * 0.5f * max.x);
+
+        point1.x = ((point1.x + 1.f) / 2.f ) * max.x;
+        point1.y = (1 - ((point1.y + 1.f) / 2.f )) * max.y;
 
         drawList.AddCircle({point1.x, point1.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
 
+        return false;
+    }
+
+    bool DrawTranslation(const char* _id, float* _x, float* _y, float* _z) {
+        ImGizmoMatrix matrix;
+        matrix.m4x4[3][0] = *_x;
+        matrix.m4x4[3][1] = *_y;
+        matrix.m4x4[3][2] = *_z;
+
+        if(DrawTranslation("ImGizmoTranslation", &matrix.m16[0] )) {
+            return true;
+        }
         return false;
     }
 };

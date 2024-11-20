@@ -92,6 +92,17 @@ struct ImGizmoMatrix {
         return m;
     };
 
+    ImGizmoVec Pos() const {
+        ImGizmoVec vec;
+
+        vec.x = this->m4x4[3][0];
+        vec.y = this->m4x4[3][1];
+        vec.z = this->m4x4[3][2];
+        vec.w = 1.f;
+
+        return vec;
+    }
+
     ImGizmoMatrix operator * (const ImGizmoMatrix& _matrix) const {
         ImGizmoMatrix out;
         FPU_MatrixF_x_MatrixF(this->m16, _matrix.m16, out.m16);
@@ -107,11 +118,9 @@ ImGizmoVec ImGizmoVec::Transform(const ImGizmoMatrix& _matrix) {
     out.z = this->x * _matrix.m4x4[0][2] + this->y * _matrix.m4x4[1][2] + this->z * _matrix.m4x4[2][2] + _matrix.m4x4[3][2];
     out.w = this->x * _matrix.m4x4[0][3] + this->y * _matrix.m4x4[1][3] + this->z * _matrix.m4x4[2][3] + _matrix.m4x4[3][3];
 
-    if(out.w != 1.f) {
-        out.x /= out.w;
-        out.y /= out.w;
-        out.z /= out.w;
-    }
+    out.x /= out.w;
+    out.y /= out.w;
+    out.z /= out.w;
 
     this->x = out.x;
     this->y = out.y;
