@@ -99,9 +99,9 @@ namespace IMGIZMO_NAMESPACE {
         gz.currentSpace.initialized = false;
     }
 
-    // -----------------
-    // RENDERING SECTION
-    // -----------------
+    // ----------
+    // DRAW CALLS
+    // ----------
 
     bool DrawTranslation(const char* _id, float* _matrix) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -142,15 +142,29 @@ namespace IMGIZMO_NAMESPACE {
         return false;
     }
 
-    bool DrawTranslation(const char* _id, float* _x, float* _y, float* _z) {
-        ImGizmoMatrix matrix;
-        matrix.m4x4[3][0] = *_x;
-        matrix.m4x4[3][1] = *_y;
-        matrix.m4x4[3][2] = *_z;
+    void DrawPoint(const char* _id, float* _x, float* _y, float* _z) {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
-        if(DrawTranslation("ImGizmoTranslation", &matrix.m16[0] )) {
-            return true;
-        }
-        return false;
+        const ImGizmoMatrix& viewMatrix = GImGizmo->currentSpace.viewMatrix;
+        const ImGizmoMatrix& projMatrix = GImGizmo->currentSpace.projMatrix;
+
+        // Push translation gizmo bounding boxes data
+        // Push translation gizmo rending data
+
+        //TODO: move rendering to end, because of depth. (We can't know if something is behind or worse infront when we call a draw function);
+        ImDrawList& drawList = *GImGizmo->currentSpace.drawList;
+
+        // Draw debug point
+        ImGizmoVec point = ImGizmoVec(*_x, *_y, *_z, 1.f);
+        point.Transform(viewMatrix);
+        point.Transform(projMatrix);
+
+        const auto& max = GImGizmo->currentSpace.frameRect.Max;
+
+        point.x = ((point.x + 1.f) / 2.f ) * max.x;
+        point.y = (1 - ((point.y + 1.f) / 2.f )) * max.y;
+
+        drawList.AddCircle({point.x, point.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
     }
 };
