@@ -261,18 +261,17 @@ namespace IMGIZMO_NAMESPACE {
         auto mousePos = ImGui::GetIO().MousePos;
         auto point1ToMouse = mousePos - screenPoint1;
         auto point1ToPoint2 = screenPoint2 - screenPoint1;
-        auto crossMagnitude = (point1ToPoint2.y * point1ToMouse.x) - (point1ToPoint2.x * point1ToMouse.y);
 
-        float normalizeValue = sqrt(pow(point1ToPoint2.x ,2.f) + pow(point1ToPoint2.y ,2.f));
-        auto normalizedP1ToP2 = ImVec2(point1ToPoint2.x / normalizeValue, point1ToPoint2.y / normalizeValue);
-        auto projectedPos = screenPoint1 + (normalizedP1ToP2 * crossMagnitude);
+        auto ADot = point1ToMouse.x * point1ToPoint2.x + point1ToMouse.y * point1ToPoint2.y;
+        auto BDot = point1ToPoint2.x * point1ToPoint2.x + point1ToPoint2.y * point1ToPoint2.y;
+        auto value = (ADot / BDot) > 1.f ? 1.f : (ADot / BDot) < 0.f ? 0.f : (ADot / BDot);
+        auto projection = ImVec2(value * point1ToPoint2.x, value * point1ToPoint2.y) + screenPoint1;
 
-        auto distance = pow(mousePos.x - projectedPos.x, 2.f) + pow(mousePos.y - projectedPos.y,2.f);
-        if (distance < 10.f)
+        auto distance = pow(mousePos.x - projection.x, 2.f) + pow(mousePos.y - projection.y,2.f);
+        if (distance < 5.f)
         {
             hovering = true;
         }
-        drawList.AddCircle(projectedPos, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
 
         if (hovering) {
             drawList.AddLine({screenPoint1.x, screenPoint1.y}, {screenPoint2.x, screenPoint2.y}, ImGui::GetColorU32({.25f, .25f, .25f, 1.f}));
