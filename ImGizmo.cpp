@@ -9,8 +9,6 @@
 
 #include "imgui.h"
 #include "imgui_internal.h"
-#include <cmath>
-#include <algorithm>
 
 #ifndef GImGizmo
 ImGizmoContext* GImGizmo = nullptr;
@@ -20,9 +18,9 @@ void InitializeContext(ImGizmoContext* context) {};
 
 namespace IMGIZMO_NAMESPACE {
 
-    // ---------------
+    // ----------------------------------------------------------------------------------------------------------------------------------
     // CONTEXT SECTION
-    // ---------------
+    // ----------------------------------------------------------------------------------------------------------------------------------
 
     ImGizmoContext* CreateContext() {
         ImGizmoContext* context = IM_NEW(ImGizmoContext)();
@@ -52,9 +50,9 @@ namespace IMGIZMO_NAMESPACE {
         GImGizmo = context;
     }
 
-    // -----------------
+    // ----------------------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS SECTION
-    // -----------------
+    // ----------------------------------------------------------------------------------------------------------------------------------
 
     bool Begin(const char* _id, float* _view, float* _proj, const ImVec2& _size) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -99,50 +97,11 @@ namespace IMGIZMO_NAMESPACE {
         gz.currentSpace.initialized = false;
     }
 
-    // ----------
+    // ----------------------------------------------------------------------------------------------------------------------------------
     // DRAW CALLS
-    // ----------
+    // ----------------------------------------------------------------------------------------------------------------------------------
 
-    bool DrawTranslation(const char* _id, float* _matrix) {
-        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
-        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
-
-        ImGizmoMatrix matrix = ImGizmoMatrix(_matrix);
-
-        // TODO: Move to global context styling
-        const float handleHeight = 10.f;
-        const float handleWidth = 2.f;
-
-        const ImGizmoMatrix& viewMatrix = GImGizmo->currentSpace.viewMatrix;
-        const ImGizmoMatrix& projMatrix = GImGizmo->currentSpace.projMatrix;
-
-        for(int i = 0; i < 3; ++i) {
-            // Create axis aligned bounding box, for fast coarse initial check
-            // Create axis bounding box, for slower accurate secondary check
-        }
-
-        // Push translation gizmo bounding boxes data
-        // Push translation gizmo rending data
-
-        //TODO: move rendering to end, because of depth. (We can't know if something is behind or worse infront when we call a draw function);
-        ImDrawList& drawList = *GImGizmo->currentSpace.drawList;
-
-        // Draw debug point
-        ImGizmoVec point1 = matrix.Pos();
-        point1.Transform(viewMatrix);
-        point1.Transform(projMatrix);
-
-        const auto& max = GImGizmo->currentSpace.frameRect.Max;
-
-        point1.x = ((point1.x + 1.f) / 2.f ) * max.x;
-        point1.y = (1 - ((point1.y + 1.f) / 2.f )) * max.y;
-
-        drawList.AddCircle({point1.x, point1.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-
-        return false;
-    }
-
-    void DrawPoint(const char* _id, float* _x, float* _y, float* _z) {
+    bool DrawPoint(const char* _id, float* _x, float* _y, float* _z) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
@@ -165,6 +124,21 @@ namespace IMGIZMO_NAMESPACE {
         point.x = ((point.x + 1.f) / 2.f ) * max.x;
         point.y = (1 - ((point.y + 1.f) / 2.f )) * max.y;
 
-        drawList.AddCircle({point.x, point.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+        bool hovering = false;
+        auto mousePos = ImGui::GetIO().MousePos;
+        auto distance = pow(mousePos.x - point.x, 2.f) + pow(mousePos.y - point.y,2.f);
+        if (distance < 5.f)
+        {
+            hovering = true;
+        }
+
+        if (hovering) {
+            drawList.AddCircle({point.x, point.y}, 1.f, ImGui::GetColorU32({.25f, .25f, .25f, 1.f}));
+        }
+        else {
+            drawList.AddCircle({point.x, point.y}, 1.f, ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+        }
+
+        return hovering;
     }
 };

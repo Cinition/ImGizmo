@@ -22,5 +22,5 @@ namespace IMGIZMO_NAMESPACE {
     bool DrawTranslation(const char* _id, float* _matrix);
     bool DrawScaling(const char* _id, float* _matrix);
     bool DrawRotation(const char* _id, float* _matrix);
-    void DrawPoint(const char* _id, float* _x, float* _y, float* _z);
+    bool DrawPoint(const char* _id, float* _x, float* _y, float* _z);
 }
