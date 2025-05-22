@@ -67,8 +67,10 @@ namespace ImGizmo {
 // [SECTION] Drawing API
 //-----------------------------------------------------------------------------
 
-    bool DrawPoint(const char* _id, ImVec3 point);
-    bool DrawLine(const char* _id, ImVec3 point1, ImVec3 point2);
+    bool DrawPoint(const char* _id, const ImVec3& _point, float _radius, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    bool DrawLine(const char* _id, const ImVec3& _point1, const ImVec3& _point2, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
 
 //-----------------------------------------------------------------------------
 // [SECTION] Predefined Gizmos

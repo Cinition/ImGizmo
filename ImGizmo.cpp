@@ -16,6 +16,8 @@ ImGizmoContext* GImGizmo = nullptr;
 enum ImGizmoDrawType {
     ImGizmoDrawType_Point,
     ImGizmoDrawType_Line,
+    ImGizmoDrawType_Triangle,
+    ImGizmoDrawType_Square,
     ImGizmoDrawType_COUNT,
 };
 
@@ -86,8 +88,9 @@ static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& _lhs, const ImMat44& 
 }
 
 // Helpers: ImVec3 Functions
-static inline ImVec3 ImVec3Transform(ImVec3& _vec, const ImMat44& _matrix) {
+static inline ImVec3 ImVec3Transform(const ImVec3& _vec, const ImMat44& _matrix) {
     ImVec4 in;
+    ImVec3 out;
 
     in.x = _vec.x * _matrix.m4x4[0][0] + _vec.y * _matrix.m4x4[1][0] + _vec.z * _matrix.m4x4[2][0] + _matrix.m4x4[3][0];
     in.y = _vec.x * _matrix.m4x4[0][1] + _vec.y * _matrix.m4x4[1][1] + _vec.z * _matrix.m4x4[2][1] + _matrix.m4x4[3][1];
@@ -98,11 +101,11 @@ static inline ImVec3 ImVec3Transform(ImVec3& _vec, const ImMat44& _matrix) {
     in.y /= in.w;
     in.z /= in.w;
 
-    _vec.x = in.x;
-    _vec.y = in.y;
-    _vec.z = in.z;
+    out.x = in.x;
+    out.y = in.y;
+    out.z = in.z;
 
-    return _vec;
+    return out;
 }
 
 static inline ImVec3 ImVec3Cross(const ImVec3& _vec1, const ImVec3& _vec2) {
@@ -260,7 +263,7 @@ namespace ImGizmo {
         return (GImGizmo->currentSpace.hoverID == nullptr ? false : true);
     }
 
-    bool DrawPoint(const char* _id, ImVec3 point) {
+    bool DrawPoint(const char* _id, const ImVec3& _point, ImU32 color) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
@@ -268,15 +271,15 @@ namespace ImGizmo {
         const ImMat44& viewMatrix = GImGizmo->currentSpace.viewMatrix;
         const ImMat44& projMatrix = GImGizmo->currentSpace.projMatrix;
 
-        ImVec3Transform(point, viewMatrix);
-        ImVec3Transform(point, projMatrix);
+        ImVec3 point;
+        point = ImVec3Transform(_point, viewMatrix);
+        point = ImVec3Transform(point, projMatrix);
 
         const auto& max = GImGizmo->currentSpace.frameRect.Max;
         ImVec2 screenPoint = {};
         screenPoint.x = ((point.x + 1.f) / 2.f ) * max.x;
         screenPoint.y = (1 - ((point.y + 1.f) / 2.f )) * max.y;
 
-        auto color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f});
         auto hoverID = GImGizmo->currentSpace.hoverID;
         if (hoverID && hoverID == _id) {
             color = ImGui::GetColorU32({.5f, .5f, .5f, 1.f});
@@ -295,17 +298,19 @@ namespace ImGizmo {
         return (activeID && activeID == _id);
     }
 
-    bool DrawLine(const char* _id, ImVec3 point1, ImVec3 point2) {
+    bool DrawLine(const char* _id, const ImVec3& _point1, const ImVec3& _point2, ImU32 color) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
         const ImMat44& viewMatrix = GImGizmo->currentSpace.viewMatrix;
         const ImMat44& projMatrix = GImGizmo->currentSpace.projMatrix;
 
-        ImVec3Transform(point1, viewMatrix);
-        ImVec3Transform(point1, projMatrix);
-        ImVec3Transform(point2, viewMatrix);
-        ImVec3Transform(point2, projMatrix);
+        ImVec3 point1;
+        ImVec3 point2;
+        point1 = ImVec3Transform(_point1, viewMatrix);
+        point1 = ImVec3Transform(point1, projMatrix);
+        point2 = ImVec3Transform(_point2, viewMatrix);
+        point2 = ImVec3Transform(point2, projMatrix);
 
         const auto& max = GImGizmo->currentSpace.frameRect.Max;
         ImVec2 screenPoint1 = {};
@@ -315,7 +320,6 @@ namespace ImGizmo {
         screenPoint2.x = ((point2.x + 1.f) / 2.f ) * max.x;
         screenPoint2.y = (1 - ((point2.y + 1.f) / 2.f )) * max.y;
 
-        auto color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f});
         auto hoverID = GImGizmo->currentSpace.hoverID;
         if (hoverID && hoverID == _id) {
             color = ImGui::GetColorU32({.5f, .5f, .5f, 1.f});
@@ -334,22 +338,30 @@ namespace ImGizmo {
         return (activeID && activeID == _id);
     }
 
+    bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color) {
+        return false;
+    }
+
+    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color) {
+        return false;
+    }
+
     bool TranslateGizmo(const char *_id, ImMat44& _matrix) {
         bool active = false;
 
-        auto drawArrow = [_matrix](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, ImVec3 up) -> bool {
+        auto drawArrow = [_matrix](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, const ImVec3& up, ImU32 color) -> bool {
             ImVec3 p1 = pos;
-            ImVec3 p2 = pos + dir * 1.f; // center tip
-            ImVec3 p3 = p2 + dir * 0.2f; // tip
+            ImVec3 p2 = pos + dir * 1.f;
+            ImVec3 p3 = p2 + dir * 0.2f;
             ImVec3 p4 = p2 + ImVec3Normalize(ImVec3Cross(dir, left)) * 0.1f;
             ImVec3 p5 = p2 + ImVec3Normalize(ImVec3Cross(dir, up)) * 0.1f;
 
             bool active = false;
-            active = active ^ DrawLine(id, p1, p3);
-            active = active ^ DrawLine(id, p3, p4);
-            active = active ^ DrawLine(id, p4, p2);
-            active = active ^ DrawLine(id, p3, p5);
-            active = active ^ DrawLine(id, p5, p2);
+            active = active ^ DrawLine(id, p1, p3, color);
+            active = active ^ DrawLine(id, p3, p4, color);
+            active = active ^ DrawLine(id, p4, p2, color);
+            active = active ^ DrawLine(id, p3, p5, color);
+            active = active ^ DrawLine(id, p5, p2, color);
 
             return active;
         };
@@ -359,9 +371,9 @@ namespace ImGizmo {
         ImVec3 at = ImVec3(_matrix.m16[8], _matrix.m16[9], _matrix.m16[10]);
         ImVec3 pos = ImVec3(_matrix.m16[12], _matrix.m16[13], _matrix.m16[14]);
 
-        bool xAxis = drawArrow("x_axis", pos, left, up, -at);
-        bool yAxis = drawArrow("y_axis", pos, up, at, -left);
-        bool zAxis = drawArrow("z_axis", pos, at, left, -up);
+        bool xAxis = drawArrow("x_axis", pos, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool yAxis = drawArrow("y_axis", pos, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool zAxis = drawArrow("z_axis", pos, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
 
         active = active ^ xAxis;
         active = active ^ yAxis;
