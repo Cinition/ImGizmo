@@ -47,7 +47,7 @@ struct ImGizmoContext;
 namespace ImGizmo {
 
 //-----------------------------------------------------------------------------
-// [SECTION] 
+// [SECTION] Context functions
 //-----------------------------------------------------------------------------
 
     ImGizmoContext* CreateContext();
@@ -59,9 +59,8 @@ namespace ImGizmo {
 // [SECTION] ImGizmo base functions
 //-----------------------------------------------------------------------------
 
-    bool Begin(const char* _id, float* _view, float* _proj, const ImVec2& _size = ImVec2(0,0));
+    bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj, const ImVec2& _size = ImVec2(0,0));
     void End();
-
     bool IsOver();
 
 //-----------------------------------------------------------------------------
@@ -70,14 +69,12 @@ namespace ImGizmo {
 
     bool DrawPoint(const char* _id, ImVec3 point);
     bool DrawLine(const char* _id, ImVec3 point1, ImVec3 point2);
-    bool DrawTriangle(const char* _id, ImVec3 point1, ImVec3 point2, ImVec3 point3);
-    bool DrawArrow(const char* _id, ImVec3 point, ImVec3 dir);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Predefined Gizmos
 //-----------------------------------------------------------------------------
 
-    bool TranslateGizmo(const char* _id, ImVec3& _position);
+    bool TranslateGizmo(const char* _id, ImMat44& _position);
     bool RotateGizmo(const char* _id, ImVec3& _rotation);
     bool ScaleGizmo(const char* _id, ImVec3& _scale);
 }
