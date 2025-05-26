@@ -62,6 +62,9 @@ namespace ImGizmo {
     bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj, const ImVec2& _size = ImVec2(0,0));
     void End();
     bool IsOver();
+    bool IsUsing();
+    ImVec2 GetActivePos();
+    ImVec2 ConvertTo2DCoords(const ImVec3& pos);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Drawing API
@@ -76,9 +79,9 @@ namespace ImGizmo {
 // [SECTION] Predefined Gizmos
 //-----------------------------------------------------------------------------
 
-    bool TranslateGizmo(const char* _id, ImMat44& _position);
-    bool RotateGizmo(const char* _id, ImVec3& _rotation);
-    bool ScaleGizmo(const char* _id, ImVec3& _scale);
+    bool TranslateGizmo(const char* _id, ImMat44& _matrix);
+    bool RotateGizmo(const char* _id, ImMat44& _matrix);
+    bool ScaleGizmo(const char* _id, ImMat44& _matrix);
 }
 
 // Helpers: ImVec3 operators
