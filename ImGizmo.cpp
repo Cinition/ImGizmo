@@ -47,9 +47,9 @@ struct ImGizmoSpace {
     ImDrawList* drawList;
     ImRect frameRect;
     std::vector<ImGizmoDraw> renderList;
-
     const char* hoverID = nullptr;
     const char* activeID = nullptr;
+    ImVec2 affectPos = {};
     bool initialized = false;
 };
 
@@ -223,7 +223,7 @@ namespace ImGizmo {
         ImVec2 mousePos = io.MousePos;
         bool mouseDown = io.MouseDown[ImGuiMouseButton_Left];
 
-        const char* hoverID = nullptr;
+        const char* hoverID = (gz.currentSpace.activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
         for(const auto& object : gz.currentSpace.renderList) {
             IM_ASSERT_USER_ERROR(object.type != ImGizmoDrawType_COUNT, "ImGizmo is trying to render an unknown object.");
 
@@ -275,10 +275,38 @@ namespace ImGizmo {
         gz.currentSpace.renderList.clear();
         gz.currentSpace.hoverID = hoverID;
         gz.currentSpace.activeID = (mouseDown && hoverID != nullptr ? hoverID : nullptr);
+        gz.currentSpace.affectPos = (gz.currentSpace.activeID != nullptr ? mousePos : ImVec2());
     }
 
     bool IsOver() {
         return (GImGizmo->currentSpace.hoverID == nullptr ? false : true);
+    }
+
+    bool IsUsing() {
+        return (GImGizmo->currentSpace.activeID == nullptr ? false : true);
+    }
+
+    ImVec2 GetActivePos() {
+        if(GImGizmo->currentSpace.activeID == nullptr)
+            return ImVec2();
+
+        return GImGizmo->currentSpace.affectPos;
+    }
+
+    ImVec2 ConvertTo2DCoords(const ImVec3& pos) {
+        const ImMat44& viewMatrix = GImGizmo->currentSpace.viewMatrix;
+        const ImMat44& projMatrix = GImGizmo->currentSpace.projMatrix;
+
+        ImVec3 point;
+        point = ImVec3Transform(pos, viewMatrix);
+        point = ImVec3Transform(point, projMatrix);
+
+        const auto& max = GImGizmo->currentSpace.frameRect.Max;
+        ImVec2 out = {};
+        out.x = ((point.x + 1.f) / 2.f ) * max.x;
+        out.y = (1 - ((point.y + 1.f) / 2.f )) * max.y;
+
+        return out;
     }
 
     bool DrawPoint(const char* _id, const ImVec3& _point, ImU32 color) {
@@ -395,6 +423,54 @@ namespace ImGizmo {
         bool xAxis = drawArrow("x_axis", pos, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
         bool yAxis = drawArrow("y_axis", pos, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
         bool zAxis = drawArrow("z_axis", pos, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+
+        ImVec2 mousePos = ImGui::GetIO().MousePos;
+        ImVec2 deltaPos = GetActivePos();
+        ImVec2 pos1 = ConvertTo2DCoords(pos);
+        ImVec2 pos1ToMouse = mousePos - pos1;
+        ImVec2 pos1ToDelta = deltaPos - pos1;
+        if (xAxis) {
+            ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(left));
+            ImVec2 pos1ToPos2 = pos2 - pos1;
+
+            float dot1 = ImVec2Dot(pos1ToMouse, pos1ToPos2);
+            float dot2 = ImVec2Dot(pos1ToPos2, pos1ToPos2);
+            float dot3 = ImVec2Dot(pos1ToDelta, pos1ToPos2);
+            float value1 = dot1 / dot2;
+            float value2 = dot3 / dot2;
+            float diff = value1 - value2;
+
+            pos = pos + ImVec3Normalize(left) * diff;
+        }
+        else if (yAxis) {
+            ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(up));
+            ImVec2 pos1ToPos2 = pos2 - pos1;
+
+            float dot1 = ImVec2Dot(pos1ToMouse, pos1ToPos2);
+            float dot2 = ImVec2Dot(pos1ToPos2, pos1ToPos2);
+            float dot3 = ImVec2Dot(pos1ToDelta, pos1ToPos2);
+            float value1 = dot1 / dot2;
+            float value2 = dot3 / dot2;
+            float diff = value1 - value2;
+
+            pos = pos + ImVec3Normalize(up) * diff;
+        }
+        else if (zAxis) {
+            ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(at));
+            ImVec2 pos1ToPos2 = pos2 - pos1;
+
+            float dot1 = ImVec2Dot(pos1ToMouse, pos1ToPos2);
+            float dot2 = ImVec2Dot(pos1ToPos2, pos1ToPos2);
+            float dot3 = ImVec2Dot(pos1ToDelta, pos1ToPos2);
+            float value1 = dot1 / dot2;
+            float value2 = dot3 / dot2;
+            float diff = value1 - value2;
+
+            pos = pos + ImVec3Normalize(at) * diff;
+        }
+        _matrix.m16[12] = pos.x;
+        _matrix.m16[14] = pos.z;
+        _matrix.m16[13] = pos.y;
 
         active = active ^ xAxis;
         active = active ^ yAxis;
