@@ -466,10 +466,10 @@ namespace ImGizmo {
         ImVec3 up = ImVec3(0.f, 1.f, 0.f);
         ImVec3 at = ImVec3(0.f, 0.f, 1.f);
         if(GImGizmo->nextItem.flags & ImGizmoNextItemFlags_HasRotation) {
-            auto rotation = GImGizmo->nextItem.rotation;
-            left = ImVec3(rotation.m4x4[0][0], rotation.m4x4[0][1], rotation.m4x4[0][2]);
-            up = ImVec3(rotation.m4x4[1][0], rotation.m4x4[1][1], rotation.m4x4[1][2]);
-            at = ImVec3(rotation.m4x4[2][0], rotation.m4x4[2][1], rotation.m4x4[2][2]);
+            auto& rotation = GImGizmo->nextItem.rotation;
+            left = ImMat44Left(rotation);
+            up = ImMat44Up(rotation);
+            at = ImMat44At(rotation);
         }
         GImGizmo->nextItem.Clear();
 
