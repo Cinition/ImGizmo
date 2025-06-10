@@ -4,7 +4,6 @@
 #include <vector>
 #endif
 
-#include <cstdio>
 #include "ImGizmo.h"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -44,6 +43,7 @@ struct ImGizmoSpace {
     ImGuiID ID;
     ImMat44 viewMatrix;
     ImMat44 projMatrix;
+    ImMat44 transMatrix;
     ImDrawList* drawList;
     ImRect frameRect;
     std::vector<ImGizmoDraw> renderList;
@@ -100,7 +100,24 @@ static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& _lhs, const ImMat44& 
     return out;
 }
 
-// Helpers: ImVec3 Functions
+// Helpers: ImMat44 Math Functions
+static inline ImVec3 ImMat44Left(const ImMat44& _mat) {
+    return ImVec3(_mat.m16[0], _mat.m16[1], _mat.m16[2]);;
+}
+
+static inline ImVec3 ImMat44Up(const ImMat44& _mat) {
+    return ImVec3(_mat.m16[4], _mat.m16[5], _mat.m16[6]);
+}
+
+static inline ImVec3 ImMat44At(const ImMat44& _mat) {
+    return ImVec3(_mat.m16[8], _mat.m16[9], _mat.m16[10]);
+}
+
+static inline ImVec3 ImMat44Pos(const ImMat44& _mat) {
+    return ImVec3(_mat.m16[12], _mat.m16[13], _mat.m16[14]);
+}
+
+// Helpers: ImVec3 Math Functions
 static inline ImVec3 ImVec3Transform(const ImVec3& _vec, const ImMat44& _matrix) {
     ImVec4 in;
     ImVec3 out;
@@ -140,6 +157,7 @@ static inline ImVec3 ImVec3Normalize(const ImVec3& _vec) {
     return out;
 }
 
+// Helpers: ImVec2 Math Functions
 static inline float ImVec2Dot(const ImVec2& _vec1, const ImVec2& _vec2) {
     return _vec1.x * _vec2.x + _vec1.y * _vec2.y;
 }
@@ -174,7 +192,7 @@ namespace ImGizmo {
         GImGizmo = context;
     }
 
-    bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj, const ImVec2& _size) {
+    bool Begin(const char* _id, ImMat44 _viewMatrix, ImMat44 _projectionMatrix, const ImVec2& _size) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
@@ -194,8 +212,8 @@ namespace ImGizmo {
             ImGuiWindow* window = g.CurrentWindow;
 
             current.initialized = true;
-            current.viewMatrix = _view;
-            current.projMatrix = _proj;
+            current.viewMatrix = _viewMatrix;
+            current.projMatrix = _projectionMatrix;
             current.drawList = window->DrawList;
             current.frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + ImGui::GetMainViewport()->Size);
 
