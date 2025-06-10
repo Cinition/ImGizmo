@@ -5,7 +5,6 @@
 #include "glm/trigonometric.hpp"
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -18,7 +17,37 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#define IM_MAT44_CLASS_EXTRA        \
+    ImMat44(const glm::mat4& m) {   \
+        auto f = glm::value_ptr(m); \
+        m16[0] = f[0];              \
+        m16[1] = f[1];              \
+        m16[2] = f[2];              \
+        m16[3] = f[3];              \
+        m16[4] = f[4];              \
+        m16[5] = f[5];              \
+        m16[6] = f[6];              \
+        m16[7] = f[7];              \
+        m16[8] = f[8];              \
+        m16[9] = f[9];              \
+        m16[10] = f[10];            \
+        m16[11] = f[11];            \
+        m16[12] = f[12];            \
+        m16[13] = f[13];            \
+        m16[14] = f[14];            \
+        m16[15] = f[15];            \
+    }                               \
+
+#define IM_VEC3_CLASS_EXTRA \
+    ImVec3(glm::vec3* v) {  \
+        x = v->x;           \
+        y = v->y;           \
+        z = v->z;           \
+    }                       \
+
 #include <ImGizmo.h>
+
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 struct Cube {
     float vertices[216] = {
@@ -210,7 +239,7 @@ int main(int argc, char** argv) {
         // Update scene
         {
             ImGuiIO& io = ImGui::GetIO();
-            handleMouseInput = !io.WantCaptureMouse;
+            handleMouseInput = !(io.WantCaptureMouse || ImGizmo::IsUsing());
 
             glm::mat4 rot = glm::mat4(1.f);
 
@@ -223,12 +252,8 @@ int main(int argc, char** argv) {
             glm::vec2 mousePos = glm::vec2(xPos, yPos);
             if(handleMouseInput) {
                 if( glfwGetMouseButton(window, 0) == GLFW_PRESS) {
-                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
                     glm::vec2 relativePos = lastMousePos - mousePos;
                     rotation += (relativePos * 0.005f) * glm::vec2(-1.f, -1.f);
-                }
-                else {
-                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                 }
             }
             lastMousePos.x = static_cast<float>(xPos);
@@ -276,47 +301,8 @@ int main(int argc, char** argv) {
                 ImGui::ShowDemoWindow(&showDemoWindow);
             }
 
-            glm::mat4 modelMatrix = glm::mat4(1.f);
-            modelMatrix = glm::translate(modelMatrix, cube1.position);
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.x), glm::vec3(1.f, 0.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.y), glm::vec3(0.f, 1.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians(cube1.rotation.z), glm::vec3(0.f, 0.f, 1.f));
-            modelMatrix = glm::scale(modelMatrix, cube1.scale);
-
-            if(ImGizmo::Begin("ImGizmo Space",glm::value_ptr(view), glm::value_ptr(proj))) {
-
-                glm::vec4 point1 = {0.5f, 0.5f, 0.5f, 1.0f};
-                point1 = modelMatrix *  point1;
-                ImGizmo::DrawTranslation("Cube Translation", &point1.x, &point1.y, &point1.z);
-
-                glm::vec4 point2 = {-0.5f, 0.5f, 0.5f, 1.0f};
-                point2 = modelMatrix *  point2;
-                ImGizmo::DrawTranslation("Cube Translation", &point2.x, &point2.y, &point2.z);
-
-                glm::vec4 point3 = {-0.5f, 0.5f, -0.5f, 1.0f};
-                point3 = modelMatrix *  point3;
-                ImGizmo::DrawTranslation("Cube Translation", &point3.x, &point3.y, &point3.z);
-
-                glm::vec4 point4 = {0.5f, 0.5f, -0.5f, 1.0f};
-                point4 = modelMatrix *  point4;
-                ImGizmo::DrawTranslation("Cube Translation", &point4.x, &point4.y, &point4.z);
-
-                glm::vec4 point5 = {0.5f, -0.5f, 0.5f, 1.0f};
-                point5 = modelMatrix *  point5;
-                ImGizmo::DrawTranslation("Cube Translation", &point5.x, &point5.y, &point5.z);
-
-                glm::vec4 point6 = {-0.5f, -0.5f, 0.5f, 1.0f};
-                point6 = modelMatrix *  point6;
-                ImGizmo::DrawTranslation("Cube Translation", &point6.x, &point6.y, &point6.z);
-
-                glm::vec4 point7 = {-0.5f, -0.5f, -0.5f, 1.0f};
-                point7 = modelMatrix *  point7;
-                ImGizmo::DrawTranslation("Cube Translation", &point7.x, &point7.y, &point7.z);
-
-                glm::vec4 point8 = {0.5f, -0.5f, -0.5f, 1.0f};
-                point8 = modelMatrix *  point8;
-                ImGizmo::DrawTranslation("Cube Translation", &point8.x, &point8.y, &point8.z);
-
+            if(ImGizmo::Begin("ImGizmo Space",view, proj)) {
+                ImGizmo::Translate("Translate", (ImVec3*)&cube1.position);
                 ImGizmo::End();
             }
 
