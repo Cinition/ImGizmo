@@ -73,15 +73,21 @@ namespace ImGizmo {
     bool DrawPoint(const char* _id, const ImVec3& _point, float _radius, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
     bool DrawLine(const char* _id, const ImVec3& _point1, const ImVec3& _point2, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
     bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point5, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+
+//-----------------------------------------------------------------------------
+// [SECTION] 3D Space helper function
+//-----------------------------------------------------------------------------
+
+    void SetNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at);
+    void SetNextItemRotation(ImVec3* _euler);
+    void SetNextItemRotation(ImVec4* _quat);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Predefined Gizmos
 //-----------------------------------------------------------------------------
 
-    bool TranslateGizmo(const char* _id, ImMat44& _matrix);
-    bool RotateGizmo(const char* _id, ImMat44& _matrix);
-    bool ScaleGizmo(const char* _id, ImMat44& _matrix);
+    bool Translate(const char* _id, ImVec3* _position);
 }
 
 // Helpers: ImVec3 operators

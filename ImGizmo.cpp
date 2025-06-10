@@ -53,9 +53,22 @@ struct ImGizmoSpace {
     bool initialized = false;
 };
 
+typedef int ImGizmoNextItemFlags;
+enum ImGizmoNextItemFlags_ {
+    ImGizmoNextItemFlags_None = 0,
+    ImGizmoNextItemFlags_HasRotation = 1 << 0,
+};
+
+struct ImGizmoNextItem {
+    ImGizmoNextItemFlags flags;
+    ImMat44 rotation;
+
+    inline void Clear() { flags = ImGizmoNextItemFlags_None; }
+};
+
 struct ImGizmoContext {
     ImGizmoSpace currentSpace;
-    // TODO: add global styling options, like in imgui
+    ImGizmoNextItem nextItem;
 };
 
 void InitializeContext(ImGizmoContext* context) {};
@@ -219,6 +232,8 @@ namespace ImGizmo {
                 default: break;
             }
 
+            ImGui::SetNextItemWidth(0.f);
+
             if (hoverID != nullptr) {
                 continue;
             }
@@ -374,7 +389,42 @@ namespace ImGizmo {
         return false;
     }
 
-    bool TranslateGizmo(const char *_id, ImMat44& _matrix) {
+    void SetNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at) {
+        ImMat44 rotation = {};
+
+        rotation.m4x4[0][0] = _left->x;
+        rotation.m4x4[0][1] = _left->y;
+        rotation.m4x4[0][2] = _left->z;
+        rotation.m4x4[1][0] = _up->x;
+        rotation.m4x4[1][0] = _up->x;
+        rotation.m4x4[1][1] = _up->y;
+        rotation.m4x4[2][2] = _at->z;
+        rotation.m4x4[2][1] = _at->y;
+        rotation.m4x4[2][2] = _at->z;
+
+        GImGizmo->nextItem.rotation = rotation;
+        GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
+    }
+
+    void SetNextItemRotation(ImVec3* _euler) {
+        ImMat44 rotation = {};
+
+        IM_ASSERT(false && "TODO");
+
+        GImGizmo->nextItem.rotation = rotation;
+        GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
+    }
+
+    void SetNextItemRotation(ImVec4* _quat) {
+        ImMat44 rotation = {};
+
+        IM_ASSERT(false && "TODO");
+
+        GImGizmo->nextItem.rotation = rotation;
+        GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
+    }
+
+    bool Translate(const char *_id, ImVec3* _position) {
         bool active = false;
 
         auto drawArrow = [](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, const ImVec3& up, ImU32 color) -> bool {
@@ -394,18 +444,25 @@ namespace ImGizmo {
             return active;
         };
 
-        ImVec3 left = ImVec3(_matrix.m16[0], _matrix.m16[1], _matrix.m16[2]);
-        ImVec3 up = ImVec3(_matrix.m16[4], _matrix.m16[5], _matrix.m16[6]);
-        ImVec3 at = ImVec3(_matrix.m16[8], _matrix.m16[9], _matrix.m16[10]);
-        ImVec3 pos = ImVec3(_matrix.m16[12], _matrix.m16[13], _matrix.m16[14]);
+        ImVec3 left = ImVec3(1.f, 0.f, 0.f);
+        ImVec3 up = ImVec3(0.f, 1.f, 0.f);
+        ImVec3 at = ImVec3(0.f, 0.f, 1.f);
+        if(GImGizmo->nextItem.flags & ImGizmoNextItemFlags_HasRotation) {
+            auto rotation = GImGizmo->nextItem.rotation;
+            left = ImVec3(rotation.m4x4[0][0], rotation.m4x4[0][1], rotation.m4x4[0][2]);
+            up = ImVec3(rotation.m4x4[1][0], rotation.m4x4[1][1], rotation.m4x4[1][2]);
+            at = ImVec3(rotation.m4x4[2][0], rotation.m4x4[2][1], rotation.m4x4[2][2]);
+        }
+        GImGizmo->nextItem.Clear();
 
-        bool xAxis = drawArrow("x_axis", pos, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool yAxis = drawArrow("y_axis", pos, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
-        bool zAxis = drawArrow("z_axis", pos, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool xAxis = drawArrow("x_axis", *_position, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool yAxis = drawArrow("y_axis", *_position, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool zAxis = drawArrow("z_axis", *_position, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
 
+        ImVec3 pos = *_position;
         ImVec2 mousePos = ImGui::GetIO().MousePos;
         ImVec2 deltaPos = GetActivePos();
-        ImVec2 pos1 = ConvertTo2DCoords(pos);
+        ImVec2 pos1 = ConvertTo2DCoords(*_position);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;
         if (xAxis) {
@@ -419,7 +476,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            pos = pos + ImVec3Normalize(left) * diff;
+            *_position = pos + ImVec3Normalize(left) * diff;
         }
         else if (yAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(up));
@@ -432,7 +489,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            pos = pos + ImVec3Normalize(up) * diff;
+            *_position = pos + ImVec3Normalize(up) * diff;
         }
         else if (zAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(at));
@@ -445,11 +502,8 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            pos = pos + ImVec3Normalize(at) * diff;
+            *_position = pos + ImVec3Normalize(at) * diff;
         }
-        _matrix.m16[12] = pos.x;
-        _matrix.m16[14] = pos.z;
-        _matrix.m16[13] = pos.y;
 
         active = active ^ xAxis;
         active = active ^ yAxis;
@@ -457,4 +511,7 @@ namespace ImGizmo {
 
         return active;
     }
+
+    bool Rotate(const char* _id, const ImVec3& _pos, ImVec3* _rot);
+    bool Scale(const char* _id, const ImVec3& _pos, ImVec3* _scale);
 };
