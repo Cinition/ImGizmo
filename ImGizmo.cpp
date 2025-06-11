@@ -1,5 +1,6 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include <cmath>
 #include <cstring>
 #include <vector>
 #endif
@@ -161,6 +162,8 @@ static inline ImVec3 ImVec3Normalize(const ImVec3& _vec) {
 static inline float ImVec2Dot(const ImVec2& _vec1, const ImVec2& _vec2) {
     return _vec1.x * _vec2.x + _vec1.y * _vec2.y;
 }
+
+const float PI = 3.1415926536;
 
 namespace ImGizmo {
 
@@ -427,7 +430,25 @@ namespace ImGizmo {
     void SetNextItemRotation(ImVec3* _euler) {
         ImMat44 rotation = {};
 
-        IM_ASSERT(false && "TODO");
+        const float HalfPI = PI / 180.f;
+        float cosX = std::cos(_euler->x * HalfPI);
+        float sinX = std::sin(_euler->x * HalfPI);
+        float cosY = std::cos(_euler->y * HalfPI);
+        float sinY = std::sin(_euler->y * HalfPI);
+        float cosZ = std::cos(_euler->z * HalfPI);
+        float sinZ = std::sin(_euler->z * HalfPI);
+
+        rotation.m4x4[0][0] = cosY * cosZ;
+        rotation.m4x4[0][1] = cosY * sinZ;
+        rotation.m4x4[0][2] = -sinY;
+
+        rotation.m4x4[1][0] = -cosX * sinZ + sinX * sinY * cosZ;
+        rotation.m4x4[1][1] = cosX * cosZ + sinX * sinY * sinZ;
+        rotation.m4x4[1][2] = sinX * cosY;
+
+        rotation.m4x4[2][0] = sinX * sinZ + cosX * sinY * cosZ;
+        rotation.m4x4[2][1] = -sinX * cosZ + cosX * sinY * sinZ;
+        rotation.m4x4[2][2] = cosX * cosY;
 
         GImGizmo->nextItem.rotation = rotation;
         GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
