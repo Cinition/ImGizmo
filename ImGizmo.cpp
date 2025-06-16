@@ -24,13 +24,24 @@ enum ImGizmoDrawType {
 struct ImGizmoDraw {
     union {
         struct {
-            ImVec2 pos;
+            ImVec3 pos;
             float radius;
         } Point;
         struct {
-            ImVec2 pos1;
-            ImVec2 pos2;
+            ImVec3 pos1;
+            ImVec3 pos2;
         } Line;
+        struct {
+            ImVec3 pos1;
+            ImVec3 pos2;
+            ImVec3 pos3;
+        } Triangle;
+        struct {
+            ImVec3 pos1;
+            ImVec3 pos2;
+            ImVec3 pos3;
+            ImVec3 pos4;
+        } Square;
     };
 
     const char* id;
@@ -50,7 +61,7 @@ struct ImGizmoSpace {
     std::vector<ImGizmoDraw> renderList;
     const char* hoverID = nullptr;
     const char* activeID = nullptr;
-    ImVec2 affectPos = {};
+    ImVec3 hoverPos = {};
     bool initialized = false;
 };
 
@@ -163,6 +174,25 @@ static inline float ImVec2Dot(const ImVec2& _vec1, const ImVec2& _vec2) {
     return _vec1.x * _vec2.x + _vec1.y * _vec2.y;
 }
 
+static inline ImVec2 ImVec2Perpendicular(const ImVec2& _vec) {
+    return ImVec2(_vec.y, -_vec.x);
+}
+
+static inline float ImVec2SignedTriangleArea(const ImVec2& _edgeA, const ImVec2& _edgeB, const ImVec2& _edgeC)
+{
+    ImVec2 ac = _edgeC - _edgeA;
+    ImVec2 abPerp = ImVec2Perpendicular(_edgeB - _edgeA);
+    return ImVec2Dot(ac, abPerp) / 2.f;
+}
+
+static bool PointInTriangle(const ImVec2& _edgeA, const ImVec2& _edgeB, const ImVec2& _edgeC, const ImVec2& _point) {
+    float areaABP = ImVec2SignedTriangleArea(_edgeA, _edgeB, _point);
+    float areaBCP = ImVec2SignedTriangleArea(_edgeB, _edgeC, _point);
+    float areaCAP = ImVec2SignedTriangleArea(_edgeC, _edgeA, _point);
+    return areaABP > 0 && areaBCP > 0 && areaCAP > 0;
+}
+
+
 const float PI = 3.1415926536;
 
 namespace ImGizmo {
@@ -240,50 +270,84 @@ namespace ImGizmo {
         bool mouseDown = io.MouseDown[ImGuiMouseButton_Left];
 
         const char* hoverID = (gz.currentSpace.activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
+
         for(const auto& object : gz.currentSpace.renderList) {
             IM_ASSERT_USER_ERROR(object.type != ImGizmoDrawType_COUNT, "ImGizmo is trying to render an unknown object.");
 
             switch (object.type) {
                 case ImGizmoDrawType_Point:
-                    drawList.AddCircle(object.Point.pos, object.Point.radius, object.col);
+                    drawList.AddCircleFilled(object.Point.pos.xy(), object.Point.radius, object.col);
                     break;
                 case ImGizmoDrawType_Line:
-                    drawList.AddLine(object.Line.pos1, object.Line.pos2, object.col);
+                    drawList.AddLine(object.Line.pos1.xy(), object.Line.pos2.xy(), object.col);
+                    break;
+                case ImGizmoDrawType_Triangle:
+                    drawList.AddTriangleFilled(object.Triangle.pos1.xy(), object.Triangle.pos2.xy(), object.Triangle.pos3.xy(), object.col);
+                    break;
+                case ImGizmoDrawType_Square:
+                    drawList.AddQuadFilled(object.Square.pos1.xy(), object.Square.pos2.xy(), object.Square.pos3.xy(), object.Square.pos4.xy(), object.col);
                     break;
                 default: break;
             }
 
             ImGui::SetNextItemWidth(0.f);
 
-            if (hoverID != nullptr) {
+            // Add depth calculation at mousepos
+            //if (hoverID != nullptr && object.depth < gz.currentSpace.hoverPos.z) {
+            //    continue;
+            //}
+
+            if (hoverID != nullptr && hoverID == object.id) {
+                gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
                 continue;
             }
 
             switch (object.type) {
                 case ImGizmoDrawType_Point: {
-                        float mag = pow(mousePos.x - object.Point.pos.x, 2.f) + pow(mousePos.y - object.Point.pos.y, 2.f);
+                    float mag = abs(pow(mousePos.x - object.Point.pos.x, 2.f) + pow(mousePos.y - object.Point.pos.y, 2.f));
 
-                        if (mag < 5.f) {
-                            hoverID = object.id;
-                        }
-                        break;
+                    if (mag < object.Point.radius) {
+                        hoverID = object.id;
+                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
                     }
+                    break;
+                }
                 case ImGizmoDrawType_Line: {
-                        ImVec2 pos1ToMouse = mousePos - object.Line.pos1;
-                        ImVec2 pos1ToPos2 = object.Line.pos2 - object.Line.pos1;
+                    ImVec2 pos1ToMouse = mousePos - object.Line.pos1.xy();
+                    ImVec2 pos1ToPos2 = object.Line.pos2.xy() - object.Line.pos1.xy();
 
-                        float dot1 = ImVec2Dot(pos1ToMouse, pos1ToPos2);
-                        float dot2 = ImVec2Dot(pos1ToPos2, pos1ToPos2);
-                        float value = dot1 / dot2;
-                        float clamp = value > 1.f ? 1.f : value < 0.f ? 0.f : value;
-                        ImVec2 proj = pos1ToPos2 * clamp + object.Line.pos1;
-                        float mag = pow(mousePos.x - proj.x, 2.f) + pow(mousePos.y - proj.y, 2.f);
+                    float dot1 = ImVec2Dot(pos1ToMouse, pos1ToPos2);
+                    float dot2 = ImVec2Dot(pos1ToPos2, pos1ToPos2);
+                    float value = dot1 / dot2;
+                    float clamp = value > 1.f ? 1.f : value < 0.f ? 0.f : value;
+                    ImVec2 proj = pos1ToPos2 * clamp + object.Line.pos1.xy();
+                    float mag = pow(mousePos.x - proj.x, 2.f) + pow(mousePos.y - proj.y, 2.f);
 
-                        if (mag < 5.f) {
-                            hoverID = object.id;
-                        }
-                        break;
+                    if (mag < 5.f) {
+                        hoverID = object.id;
                     }
+                    break;
+                }
+                case ImGizmoDrawType_Triangle: {
+                    bool inTriangle = PointInTriangle(object.Triangle.pos1.xy(), object.Triangle.pos2.xy(), object.Triangle.pos3.xy(), mousePos);
+
+                    if(inTriangle) {
+                        hoverID = object.id;
+                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
+                    }
+                    break;
+                }
+                case ImGizmoDrawType_Square: {
+                    bool inTriangle1 = PointInTriangle(object.Square.pos1.xy(),object.Square.pos2.xy(), object.Square.pos3.xy(), mousePos);
+                    bool inTriangle2 = PointInTriangle(object.Square.pos3.xy(),object.Square.pos4.xy(), object.Square.pos1.xy(), mousePos);
+
+                    if(inTriangle1 || inTriangle2) {
+                        hoverID = object.id;
+                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
+                    }
+                    break;
+                }
+
                 default: break;
             }
         }
@@ -293,7 +357,6 @@ namespace ImGizmo {
         gz.currentSpace.renderList.clear();
         gz.currentSpace.hoverID = hoverID;
         gz.currentSpace.activeID = (mouseDown && hoverID != nullptr ? hoverID : nullptr);
-        gz.currentSpace.affectPos = (gz.currentSpace.activeID != nullptr ? mousePos : ImVec2());
     }
 
     bool IsOver() {
@@ -304,11 +367,32 @@ namespace ImGizmo {
         return (GImGizmo->currentSpace.activeID == nullptr ? false : true);
     }
 
-    ImVec2 GetActivePos() {
-        if(GImGizmo->currentSpace.activeID == nullptr)
-            return ImVec2();
+    const char* GetHoveredID() {
+        if(GImGizmo->currentSpace.hoverID == nullptr)
+            return nullptr;
 
-        return GImGizmo->currentSpace.affectPos;
+        return GImGizmo->currentSpace.hoverID;
+    }
+
+    const char* GetActiveID() {
+        if(GImGizmo->currentSpace.activeID == nullptr)
+            return nullptr;
+
+        return GImGizmo->currentSpace.activeID;
+    }
+
+    ImVec3 GetHoveredPos() {
+        if(GImGizmo->currentSpace.hoverID == nullptr)
+            return ImVec3();
+
+        return GImGizmo->currentSpace.hoverPos;
+    }
+
+    ImVec3 GetActivePos() {
+        if(GImGizmo->currentSpace.activeID == nullptr)
+            return ImVec3();
+
+        return GImGizmo->currentSpace.hoverPos;
     }
 
     ImVec2 ConvertTo2DCoords(const ImVec3& pos) {
@@ -327,7 +411,7 @@ namespace ImGizmo {
         return out;
     }
 
-    bool DrawPoint(const char* _id, const ImVec3& _point, ImU32 color) {
+    bool DrawPoint(const char* _id, const ImVec3& _point, float _radius, ImU32 color) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
@@ -340,9 +424,10 @@ namespace ImGizmo {
         point = ImVec3Transform(point, projMatrix);
 
         const auto& max = GImGizmo->currentSpace.frameRect.Max;
-        ImVec2 screenPoint = {};
+        ImVec3 screenPoint = {};
         screenPoint.x = ((point.x + 1.f) / 2.f ) * max.x;
         screenPoint.y = (1 - ((point.y + 1.f) / 2.f )) * max.y;
+        screenPoint.z = point.z;
 
         auto hoverID = GImGizmo->currentSpace.hoverID;
         if (hoverID && hoverID == _id) {
@@ -353,9 +438,9 @@ namespace ImGizmo {
         object.id = _id;
         object.type = ImGizmoDrawType_Point;
         object.Point.pos = screenPoint;
-        object.Point.radius = 2.f;
+        object.Point.radius = _radius;
         object.col = color;
-        object.depth = point.z;
+        object.depth = 20.f;
         GImGizmo->currentSpace.renderList.push_back(object);
 
         const char* activeID = GImGizmo->currentSpace.activeID;
@@ -377,12 +462,14 @@ namespace ImGizmo {
         point2 = ImVec3Transform(point2, projMatrix);
 
         const auto& max = GImGizmo->currentSpace.frameRect.Max;
-        ImVec2 screenPoint1 = {};
-        ImVec2 screenPoint2 = {};
+        ImVec3 screenPoint1 = {};
+        ImVec3 screenPoint2 = {};
         screenPoint1.x = ((point1.x + 1.f) / 2.f ) * max.x;
         screenPoint1.y = (1 - ((point1.y + 1.f) / 2.f )) * max.y;
+        screenPoint1.z = point1.z;
         screenPoint2.x = ((point2.x + 1.f) / 2.f ) * max.x;
         screenPoint2.y = (1 - ((point2.y + 1.f) / 2.f )) * max.y;
+        screenPoint2.z = point2.z;
 
         auto hoverID = GImGizmo->currentSpace.hoverID;
         if (hoverID && hoverID == _id) {
@@ -403,11 +490,110 @@ namespace ImGizmo {
     }
 
     bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color) {
-        return false;
-    }
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
-    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color) {
-        return false;
+        const ImMat44& viewMatrix = GImGizmo->currentSpace.viewMatrix;
+        const ImMat44& projMatrix = GImGizmo->currentSpace.projMatrix;
+
+        ImVec3 point1;
+        ImVec3 point2;
+        ImVec3 point3;
+        point1 = ImVec3Transform(_point1, viewMatrix);
+        point1 = ImVec3Transform(point1, projMatrix);
+        point2 = ImVec3Transform(_point2, viewMatrix);
+        point2 = ImVec3Transform(point2, projMatrix);
+        point3 = ImVec3Transform(_point3, viewMatrix);
+        point3 = ImVec3Transform(point3, projMatrix);
+
+        const auto& max = GImGizmo->currentSpace.frameRect.Max;
+        ImVec3 screenPoint1 = {};
+        ImVec3 screenPoint2 = {};
+        ImVec3 screenPoint3 = {};
+        screenPoint1.x = ((point1.x + 1.f) / 2.f ) * max.x;
+        screenPoint1.y = (1 - ((point1.y + 1.f) / 2.f )) * max.y;
+        screenPoint1.z = point1.z;
+        screenPoint2.x = ((point2.x + 1.f) / 2.f ) * max.x;
+        screenPoint2.y = (1 - ((point2.y + 1.f) / 2.f )) * max.y;
+        screenPoint2.z = point2.z;
+        screenPoint3.x = ((point3.x + 1.f) / 2.f ) * max.x;
+        screenPoint3.y = (1 - ((point3.y + 1.f) / 2.f )) * max.y;
+        screenPoint3.z = point3.z;
+
+        auto hoverID = GImGizmo->currentSpace.hoverID;
+        if (hoverID && hoverID == _id) {
+            color = ImGui::GetColorU32({.5f, .5f, .5f, 1.f});
+        }
+
+        ImGizmoDraw object = {};
+        object.id = _id;
+        object.type = ImGizmoDrawType_Triangle;
+        object.Triangle.pos1 = screenPoint1;
+        object.Triangle.pos2 = screenPoint2;
+        object.Triangle.pos3 = screenPoint3;
+        object.col = color;
+        object.depth = point1.z;
+        GImGizmo->currentSpace.renderList.push_back(object);
+
+        const char* activeID = GImGizmo->currentSpace.activeID;
+        return (activeID && activeID == _id);
+    }
+    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point4, ImU32 color) {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
+
+        const ImMat44& viewMatrix = GImGizmo->currentSpace.viewMatrix;
+        const ImMat44& projMatrix = GImGizmo->currentSpace.projMatrix;
+
+        ImVec3 point1;
+        ImVec3 point2;
+        ImVec3 point3;
+        ImVec3 point4;
+        point1 = ImVec3Transform(_point1, viewMatrix);
+        point1 = ImVec3Transform(point1, projMatrix);
+        point2 = ImVec3Transform(_point2, viewMatrix);
+        point2 = ImVec3Transform(point2, projMatrix);
+        point3 = ImVec3Transform(_point3, viewMatrix);
+        point3 = ImVec3Transform(point3, projMatrix);
+        point4 = ImVec3Transform(_point4, viewMatrix);
+        point4 = ImVec3Transform(point4, projMatrix);
+
+        const auto& max = GImGizmo->currentSpace.frameRect.Max;
+        ImVec3 screenPoint1 = {};
+        ImVec3 screenPoint2 = {};
+        ImVec3 screenPoint3 = {};
+        ImVec3 screenPoint4 = {};
+        screenPoint1.x = ((point1.x + 1.f) / 2.f ) * max.x;
+        screenPoint1.y = (1 - ((point1.y + 1.f) / 2.f )) * max.y;
+        screenPoint1.z = point1.z;
+        screenPoint2.x = ((point2.x + 1.f) / 2.f ) * max.x;
+        screenPoint2.y = (1 - ((point2.y + 1.f) / 2.f )) * max.y;
+        screenPoint2.z = point2.z;
+        screenPoint3.x = ((point3.x + 1.f) / 2.f ) * max.x;
+        screenPoint3.y = (1 - ((point3.y + 1.f) / 2.f )) * max.y;
+        screenPoint3.z = point3.z;
+        screenPoint4.x = ((point4.x + 1.f) / 2.f ) * max.x;
+        screenPoint4.y = (1 - ((point4.y + 1.f) / 2.f )) * max.y;
+        screenPoint4.z = point4.z;
+
+        auto hoverID = GImGizmo->currentSpace.hoverID;
+        if (hoverID && hoverID == _id) {
+            color = ImGui::GetColorU32({.5f, .5f, .5f, 1.f});
+        }
+
+        ImGizmoDraw object = {};
+        object.id = _id;
+        object.type = ImGizmoDrawType_Triangle;
+        object.Square.pos1 = screenPoint1;
+        object.Square.pos2 = screenPoint2;
+        object.Square.pos3 = screenPoint3;
+        object.Square.pos4 = screenPoint4;
+        object.col = color;
+        object.depth = point1.z;
+        GImGizmo->currentSpace.renderList.push_back(object);
+
+        const char* activeID = GImGizmo->currentSpace.activeID;
+        return (activeID && activeID == _id);
     }
 
     void SetNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at) {
@@ -475,10 +661,8 @@ namespace ImGizmo {
 
             bool active = false;
             active = active ^ DrawLine(id, p1, p3, color);
-            active = active ^ DrawLine(id, p3, p4, color);
-            active = active ^ DrawLine(id, p4, p2, color);
-            active = active ^ DrawLine(id, p3, p5, color);
-            active = active ^ DrawLine(id, p5, p2, color);
+            active = active ^ DrawTriangle(id, p3, p2, p4, color);
+            active = active ^ DrawTriangle(id, p3, p2, p5, color);
 
             return active;
         };
@@ -498,9 +682,11 @@ namespace ImGizmo {
         bool yAxis = drawArrow("y_axis", *_position, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
         bool zAxis = drawArrow("z_axis", *_position, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
 
+        DrawPoint("center_axis", *_position, 5.f);
+
         ImVec3 pos = *_position;
         ImVec2 mousePos = ImGui::GetIO().MousePos;
-        ImVec2 deltaPos = GetActivePos();
+        ImVec2 deltaPos = GetActivePos().xy();
         ImVec2 pos1 = ConvertTo2DCoords(*_position);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;

@@ -20,6 +20,7 @@ struct ImVec3 {
     float x, y, z;
     constexpr ImVec3()                             : x(0.f), y(0.f), z(0.f) {}
     constexpr ImVec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    inline ImVec2 xy() const { return ImVec2(x, y); }
 #ifdef IM_VEC3_CLASS_EXTRA
     IM_VEC3_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imgizmoconfig.h to convert back and forth between your math types and ImVec3.
 #endif
@@ -63,8 +64,12 @@ namespace ImGizmo {
     void End();
     bool IsOver();
     bool IsUsing();
-    ImVec2 GetActivePos();
     ImVec2 ConvertTo2DCoords(const ImVec3& pos);
+    
+    const char* GetHoveredID();
+    const char* GetActiveID();
+    ImVec3 GetHoveredPos();
+    ImVec3 GetActivePos();
 
 //-----------------------------------------------------------------------------
 // [SECTION] Drawing API
@@ -73,7 +78,7 @@ namespace ImGizmo {
     bool DrawPoint(const char* _id, const ImVec3& _point, float _radius, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
     bool DrawLine(const char* _id, const ImVec3& _point1, const ImVec3& _point2, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
     bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point5, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point4, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
 
 //-----------------------------------------------------------------------------
 // [SECTION] 3D Space helper function
