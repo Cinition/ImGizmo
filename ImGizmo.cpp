@@ -17,7 +17,7 @@ enum ImGizmoDrawType {
     ImGizmoDrawType_Point,
     ImGizmoDrawType_Line,
     ImGizmoDrawType_Triangle,
-    ImGizmoDrawType_Square,
+    ImGizmoDrawType_Quad,
     ImGizmoDrawType_COUNT,
 };
 
@@ -41,7 +41,7 @@ struct ImGizmoDraw {
             ImVec3 pos2;
             ImVec3 pos3;
             ImVec3 pos4;
-        } Square;
+        } Quad;
     };
 
     const char* id;
@@ -114,7 +114,7 @@ static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& _lhs, const ImMat44& 
 
 // Helpers: ImMat44 Math Functions
 static inline ImVec3 ImMat44Left(const ImMat44& _mat) {
-    return ImVec3(_mat.m16[0], _mat.m16[1], _mat.m16[2]);;
+    return ImVec3(_mat.m16[0], _mat.m16[1], _mat.m16[2]);
 }
 
 static inline ImVec3 ImMat44Up(const ImMat44& _mat) {
@@ -284,8 +284,8 @@ namespace ImGizmo {
                 case ImGizmoDrawType_Triangle:
                     drawList.AddTriangleFilled(object.Triangle.pos1.xy(), object.Triangle.pos2.xy(), object.Triangle.pos3.xy(), object.col);
                     break;
-                case ImGizmoDrawType_Square:
-                    drawList.AddQuadFilled(object.Square.pos1.xy(), object.Square.pos2.xy(), object.Square.pos3.xy(), object.Square.pos4.xy(), object.col);
+                case ImGizmoDrawType_Quad:
+                    drawList.AddQuadFilled(object.Quad.pos1.xy(), object.Quad.pos2.xy(), object.Quad.pos3.xy(), object.Quad.pos4.xy(), object.col);
                     break;
                 default: break;
             }
@@ -337,9 +337,9 @@ namespace ImGizmo {
                     }
                     break;
                 }
-                case ImGizmoDrawType_Square: {
-                    bool inTriangle1 = PointInTriangle(object.Square.pos1.xy(),object.Square.pos2.xy(), object.Square.pos3.xy(), mousePos);
-                    bool inTriangle2 = PointInTriangle(object.Square.pos3.xy(),object.Square.pos4.xy(), object.Square.pos1.xy(), mousePos);
+                case ImGizmoDrawType_Quad: {
+                    bool inTriangle1 = PointInTriangle(object.Quad.pos1.xy(),object.Quad.pos2.xy(), object.Quad.pos3.xy(), mousePos);
+                    bool inTriangle2 = PointInTriangle(object.Quad.pos3.xy(),object.Quad.pos4.xy(), object.Quad.pos1.xy(), mousePos);
 
                     if(inTriangle1 || inTriangle2) {
                         hoverID = object.id;
@@ -538,7 +538,7 @@ namespace ImGizmo {
         const char* activeID = GImGizmo->currentSpace.activeID;
         return (activeID && activeID == _id);
     }
-    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point4, ImU32 color) {
+    bool DrawQuad(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point4, ImU32 color) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "Current ImGizmo space is empty. Did you call ImGizmo::Begin()?");
 
@@ -584,10 +584,10 @@ namespace ImGizmo {
         ImGizmoDraw object = {};
         object.id = _id;
         object.type = ImGizmoDrawType_Triangle;
-        object.Square.pos1 = screenPoint1;
-        object.Square.pos2 = screenPoint2;
-        object.Square.pos3 = screenPoint3;
-        object.Square.pos4 = screenPoint4;
+        object.Quad.pos1 = screenPoint1;
+        object.Quad.pos2 = screenPoint2;
+        object.Quad.pos3 = screenPoint3;
+        object.Quad.pos4 = screenPoint4;
         object.col = color;
         object.depth = point1.z;
         GImGizmo->currentSpace.renderList.push_back(object);
@@ -662,7 +662,7 @@ namespace ImGizmo {
             bool active = false;
             active = active ^ DrawLine(id, p1, p3, color);
             active = active ^ DrawTriangle(id, p3, p2, p4, color);
-            active = active ^ DrawTriangle(id, p3, p2, p5, color);
+            active = active ^ DrawTriangle(id, p3, p5, p2, color);
 
             return active;
         };
