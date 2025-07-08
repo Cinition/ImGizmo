@@ -69,7 +69,8 @@ namespace ImGizmo {
     const char* GetHoveredID();
     const char* GetActiveID();
     ImVec3 GetHoveredPos();
-    ImVec3 GetActivePos();
+    ImVec2 GetUsingStartPos();
+    ImVec2 GetLastMousePos();
 
 //-----------------------------------------------------------------------------
 // [SECTION] Drawing API

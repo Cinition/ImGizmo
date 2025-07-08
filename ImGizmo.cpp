@@ -62,6 +62,9 @@ struct ImGizmoSpace {
     const char* hoverID = nullptr;
     const char* activeID = nullptr;
     ImVec3 hoverPos = {};
+    ImVec2 initialMousePos = {};
+    ImVec2 lastMousePos = {};
+    bool firstMouseDownFrame = true;
     bool initialized = false;
 };
 
@@ -269,7 +272,8 @@ namespace ImGizmo {
         ImVec2 mousePos = io.MousePos;
         bool mouseDown = io.MouseDown[ImGuiMouseButton_Left];
 
-        const char* hoverID = (gz.currentSpace.activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
+        const char* activeID = gz.currentSpace.activeID;
+        const char* hoverID = (activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
 
         for(const auto& object : gz.currentSpace.renderList) {
             IM_ASSERT_USER_ERROR(object.type != ImGizmoDrawType_COUNT, "ImGizmo is trying to render an unknown object.");
@@ -290,15 +294,7 @@ namespace ImGizmo {
                 default: break;
             }
 
-            ImGui::SetNextItemWidth(0.f);
-
-            // Add depth calculation at mousepos
-            //if (hoverID != nullptr && object.depth < gz.currentSpace.hoverPos.z) {
-            //    continue;
-            //}
-
-            if (hoverID != nullptr && hoverID == object.id) {
-                gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
+            if (hoverID != nullptr && hoverID != object.id) {
                 continue;
             }
 
@@ -308,7 +304,6 @@ namespace ImGizmo {
 
                     if (mag < object.Point.radius) {
                         hoverID = object.id;
-                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
                     }
                     break;
                 }
@@ -333,7 +328,6 @@ namespace ImGizmo {
 
                     if(inTriangle) {
                         hoverID = object.id;
-                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
                     }
                     break;
                 }
@@ -343,7 +337,6 @@ namespace ImGizmo {
 
                     if(inTriangle1 || inTriangle2) {
                         hoverID = object.id;
-                        gz.currentSpace.hoverPos = ImVec3(mousePos.x, mousePos.y, object.depth);
                     }
                     break;
                 }
@@ -355,8 +348,20 @@ namespace ImGizmo {
         // Reset current ImGizmo space
         gz.currentSpace.initialized = false;
         gz.currentSpace.renderList.clear();
-        gz.currentSpace.hoverID = hoverID;
-        gz.currentSpace.activeID = (mouseDown && hoverID != nullptr ? hoverID : nullptr);
+
+        if(mouseDown == true && gz.currentSpace.firstMouseDownFrame == true)
+        {
+            gz.currentSpace.initialMousePos = mousePos;
+            gz.currentSpace.activeID = hoverID;
+            gz.currentSpace.firstMouseDownFrame = false;
+        }
+        else if (mouseDown == false) {
+            gz.currentSpace.hoverID = hoverID;
+            gz.currentSpace.activeID = nullptr;
+            gz.currentSpace.firstMouseDownFrame = true;
+        }
+
+        gz.currentSpace.lastMousePos = mousePos;
     }
 
     bool IsOver() {
@@ -382,17 +387,15 @@ namespace ImGizmo {
     }
 
     ImVec3 GetHoveredPos() {
-        if(GImGizmo->currentSpace.hoverID == nullptr)
-            return ImVec3();
-
         return GImGizmo->currentSpace.hoverPos;
     }
 
-    ImVec3 GetActivePos() {
-        if(GImGizmo->currentSpace.activeID == nullptr)
-            return ImVec3();
+    ImVec2 GetUsingStartPos() {
+        return GImGizmo->currentSpace.initialMousePos;
+    }
 
-        return GImGizmo->currentSpace.hoverPos;
+    ImVec2 GetLastMousePos() {
+        return GImGizmo->currentSpace.lastMousePos;
     }
 
     ImVec2 ConvertTo2DCoords(const ImVec3& pos) {
@@ -663,6 +666,8 @@ namespace ImGizmo {
             active = active ^ DrawLine(id, p1, p3, color);
             active = active ^ DrawTriangle(id, p3, p2, p4, color);
             active = active ^ DrawTriangle(id, p3, p5, p2, color);
+            DrawLine(id, p3, p4, color);
+            DrawLine(id, p3, p5, color);
 
             return active;
         };
@@ -686,7 +691,7 @@ namespace ImGizmo {
 
         ImVec3 pos = *_position;
         ImVec2 mousePos = ImGui::GetIO().MousePos;
-        ImVec2 deltaPos = GetActivePos().xy();
+        ImVec2 deltaPos = GetLastMousePos();
         ImVec2 pos1 = ConvertTo2DCoords(*_position);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;
