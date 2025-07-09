@@ -586,7 +586,7 @@ namespace ImGizmo {
 
         ImGizmoDraw object = {};
         object.id = _id;
-        object.type = ImGizmoDrawType_Triangle;
+        object.type = ImGizmoDrawType_Quad;
         object.Quad.pos1 = screenPoint1;
         object.Quad.pos2 = screenPoint2;
         object.Quad.pos3 = screenPoint3;
@@ -655,7 +655,7 @@ namespace ImGizmo {
     bool Translate(const char *_id, ImVec3* _position) {
         bool active = false;
 
-        auto drawArrow = [](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, const ImVec3& up, ImU32 color) -> bool {
+        auto drawAxis = [](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, const ImVec3& up, ImU32 color) -> bool {
             ImVec3 p1 = pos;
             ImVec3 p2 = pos + dir * 1.f;
             ImVec3 p3 = p2 + dir * 0.2f;
@@ -672,6 +672,15 @@ namespace ImGizmo {
             return active;
         };
 
+        auto drawPlane = [](const char* id, const ImVec3& pos, const ImVec3& axis1, const ImVec3& axis2, ImU32 color) -> bool {
+            ImVec3 p1 = pos + (axis1 * 0.25f) + (axis2 * 0.25f); 
+            ImVec3 p2 = p1 + (axis1 * 0.25f);
+            ImVec3 p3 = p1 + (axis1 * 0.25f) + (axis2 * 0.25f);
+            ImVec3 p4 = p1 + (axis2 * 0.25f);
+
+            return DrawQuad(id, p1, p2, p3, p4, color);
+        };
+
         ImVec3 left = ImVec3(1.f, 0.f, 0.f);
         ImVec3 up = ImVec3(0.f, 1.f, 0.f);
         ImVec3 at = ImVec3(0.f, 0.f, 1.f);
@@ -683,9 +692,17 @@ namespace ImGizmo {
         }
         GImGizmo->nextItem.Clear();
 
-        bool xAxis = drawArrow("x_axis", *_position, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool yAxis = drawArrow("y_axis", *_position, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
-        bool zAxis = drawArrow("z_axis", *_position, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool xAxis = drawAxis("x_axis", *_position, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool yAxis = drawAxis("y_axis", *_position, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool zAxis = drawAxis("z_axis", *_position, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+
+        bool xyAxis = drawPlane("xy_axis", *_position, ImVec3Normalize(left), ImVec3Normalize(up), ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool yzAxis = drawPlane("yz_axis", *_position, ImVec3Normalize(up), ImVec3Normalize(at), ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool zxAxis = drawPlane("zx_axis", *_position, ImVec3Normalize(at), ImVec3Normalize(left), ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+
+        xAxis = xAxis ^ (xyAxis || zxAxis);
+        yAxis = yAxis ^ (yzAxis || xyAxis);
+        zAxis = zAxis ^ (zxAxis || yzAxis);
 
         DrawPoint("center_axis", *_position, 5.f);
 
@@ -706,9 +723,9 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *_position = pos + ImVec3Normalize(left) * diff;
+            *_position += ImVec3Normalize(left) * diff;
         }
-        else if (yAxis) {
+        if (yAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(up));
             ImVec2 pos1ToPos2 = pos2 - pos1;
 
@@ -719,9 +736,9 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *_position = pos + ImVec3Normalize(up) * diff;
+            *_position += ImVec3Normalize(up) * diff;
         }
-        else if (zAxis) {
+        if (zAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(at));
             ImVec2 pos1ToPos2 = pos2 - pos1;
 
@@ -732,7 +749,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *_position = pos + ImVec3Normalize(at) * diff;
+            *_position += ImVec3Normalize(at) * diff;
         }
 
         active = active ^ xAxis;
