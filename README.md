@@ -1,4 +1,4 @@
-# ImGizmo
+![ImGizmo_Logo](https://github.com/user-attachments/assets/164dc89a-6e86-4051-a574-caa8cd0279bf)
 
 ImGizmo is a Dear ImGui extension that focusing on giving the library the functionality to draw gizmos that are needed for scene manipulation, for both 3D and 2D. ImGizmo strives for great UX and bases most of its functionality and usability on the great work by [Robin-Yann Storm](https://rystorm.com/blog/translate-gizmo-design).
 
