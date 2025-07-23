@@ -17,9 +17,25 @@ enum ImGizmoDrawType {
     ImGizmoDrawType_Point,
     ImGizmoDrawType_Line,
     ImGizmoDrawType_Triangle,
+    ImGizmoDrawType_Triangle_Outline,
     ImGizmoDrawType_Quad,
+    ImGizmoDrawType_Quad_Outline,
     ImGizmoDrawType_COUNT,
 };
+
+typedef int ImGizmoNextSpaceFlags;
+enum ImGizmoNextSpaceFlags_ {
+    ImGizmoNextSpaceFlags_None = 0,
+    ImGizmoNextSpaceFlags_HasCameraPos = 1 << 0,
+};
+
+typedef int ImGizmoNextItemFlags;
+enum ImGizmoNextItemFlags_ {
+    ImGizmoNextItemFlags_None = 0,
+    ImGizmoNextItemFlags_HasRotation = 1 << 0,
+    ImGizmoNextItemFlags_HasCameraPos = 1 << 1,
+};
+
 
 struct ImGizmoDraw {
     union {
@@ -68,10 +84,11 @@ struct ImGizmoSpace {
     bool initialized = false;
 };
 
-typedef int ImGizmoNextItemFlags;
-enum ImGizmoNextItemFlags_ {
-    ImGizmoNextItemFlags_None = 0,
-    ImGizmoNextItemFlags_HasRotation = 1 << 0,
+struct ImGizmoNextSpace {
+    ImGizmoNextSpaceFlags flags;
+    ImVec3 cameraPos = {};
+
+    inline void Clear() { flags = ImGizmoNextSpaceFlags_None; }
 };
 
 struct ImGizmoNextItem {
@@ -83,6 +100,7 @@ struct ImGizmoNextItem {
 
 struct ImGizmoContext {
     ImGizmoSpace currentSpace;
+    ImGizmoNextSpace nextSpace;
     ImGizmoNextItem nextItem;
 };
 
@@ -161,9 +179,13 @@ static inline ImVec3 ImVec3Cross(const ImVec3& _vec1, const ImVec3& _vec2) {
     return out;
 }
 
+static inline float ImVec3Magnitude(const ImVec3& _vec) {
+    return sqrt(pow(_vec.x, 2.f) + pow(_vec.y, 2.f) + pow(_vec.z, 2.f));
+}
+
 static inline ImVec3 ImVec3Normalize(const ImVec3& _vec) {
     ImVec3 out = _vec;
-    float mag = sqrt(pow(_vec.x, 2.f) + pow(_vec.y, 2.f) + pow(_vec.z, 2.f));
+    const float mag = ImVec3Magnitude(out);
     if (mag != 0.f) {
         out.x /= mag;
         out.y /= mag;
@@ -228,7 +250,7 @@ namespace ImGizmo {
         GImGizmo = context;
     }
 
-    bool Begin(const char* _id, ImMat44 _viewMatrix, ImMat44 _projectionMatrix, const ImVec2& _size) {
+    bool Begin(const char* _id, ImMat44 _viewMatrix, ImMat44 _projectionMatrix) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
@@ -652,27 +674,37 @@ namespace ImGizmo {
         GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
     }
 
+    void SetNextSpaceCameraPos(ImVec3* _pos) {
+        GImGizmo->nextSpace.cameraPos = *_pos;
+        GImGizmo->nextSpace.flags |= ImGizmoNextSpaceFlags_HasCameraPos;
+    }
+
     bool Translate(const char *_id, ImVec3* _position) {
         bool active = false;
 
-        auto drawAxis = [](const char* id, const ImVec3& pos, const ImVec3& dir, const ImVec3& left, const ImVec3& up, ImU32 color) -> bool {
+        auto drawAxis = [](const char* id, const ImVec3& pos, const ImVec3& at, const ImVec3& axis1, const ImVec3& axis2, bool inverted, ImU32 color) -> bool {
             ImVec3 p1 = pos;
-            ImVec3 p2 = pos + dir * 1.f;
-            ImVec3 p3 = p2 + dir * 0.2f;
-            ImVec3 p4 = p2 + ImVec3Normalize(ImVec3Cross(dir, left)) * 0.1f;
-            ImVec3 p5 = p2 + ImVec3Normalize(ImVec3Cross(dir, up)) * 0.1f;
+            ImVec3 p2 = pos + (at * 1.f);
+            ImVec3 p3 = p2 + (at * 0.2f);
+            ImVec3 p4 = p2 + (axis1 * 0.1f);
+            ImVec3 p5 = p2 + (axis2 * 0.1f);
+
+            const auto transp = ImGui::GetColorU32({0.f,0.f,0.f,0.f});
 
             bool active = false;
-            active = active ^ DrawLine(id, p1, p3, color);
-            active = active ^ DrawTriangle(id, p3, p2, p4, color);
-            active = active ^ DrawTriangle(id, p3, p5, p2, color);
-            DrawLine(id, p3, p4, color);
-            DrawLine(id, p3, p5, color);
+            active = active ^ DrawLine(id, p1, p2, color);
+            active = active ^ DrawTriangle(id, p3, p4, p2, (inverted ? transp : color));
+            active = active ^ DrawTriangle(id, p3, p2, p5, (inverted ? transp : color));
+
+            DrawLine(id, p2, p5, (inverted ? color : transp));
+            DrawLine(id, p2, p4, (inverted ? color : transp));
+            DrawLine(id, p3, p5, (inverted ? color : transp));
+            DrawLine(id, p3, p4, (inverted ? color : transp));
 
             return active;
         };
 
-        auto drawPlane = [](const char* id, const ImVec3& pos, const ImVec3& axis1, const ImVec3& axis2, ImU32 color) -> bool {
+        auto drawPlane = [](const char* id, const ImVec3& pos, const ImVec3& axis1, const ImVec3& axis2, bool inverted, ImU32 color) -> bool {
             ImVec3 p1 = pos + (axis1 * 0.25f) + (axis2 * 0.25f); 
             ImVec3 p2 = p1 + (axis1 * 0.25f);
             ImVec3 p3 = p1 + (axis1 * 0.25f) + (axis2 * 0.25f);
@@ -690,15 +722,41 @@ namespace ImGizmo {
             up = ImMat44Up(rotation);
             at = ImMat44At(rotation);
         }
+
+        bool xAxisInv = false;
+        bool yAxisInv = false;
+        bool zAxisInv = false;
+
+        if (GImGizmo->nextSpace.flags & ImGizmoNextSpaceFlags_HasCameraPos) {
+            const auto& camPos = GImGizmo->nextSpace.cameraPos;
+
+            const float xPlaneDistance = left.x * camPos.x + left.y * camPos.y + left.z * camPos.z;
+            const float yPlaneDistance = up.x * camPos.x + up.y * camPos.y + up.z * camPos.z;
+            const float zPlaneDistance = at.x * camPos.x + at.y * camPos.y + at.z * camPos.z;
+
+            if(xPlaneDistance < 0.f) {
+                left = -left;
+                xAxisInv = true;
+            }
+            if(yPlaneDistance < 0.f) {
+                up = -up;
+                yAxisInv = true;
+            }
+            if(zPlaneDistance < 0.f) {
+                at = -at;
+                zAxisInv = true;
+            }
+        }
+
         GImGizmo->nextItem.Clear();
 
-        bool xAxis = drawAxis("x_axis", *_position, ImVec3Normalize(left), up, -at, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool yAxis = drawAxis("y_axis", *_position, ImVec3Normalize(up), at, -left, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
-        bool zAxis = drawAxis("z_axis", *_position, ImVec3Normalize(at), left, -up, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool xAxis = drawAxis("x_axis", *_position, left, up, at, xAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool yAxis = drawAxis("y_axis", *_position, up, at, left, yAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool zAxis = drawAxis("z_axis", *_position, at, left, up, zAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
 
-        bool xyAxis = drawPlane("xy_axis", *_position, ImVec3Normalize(left), ImVec3Normalize(up), ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
-        bool yzAxis = drawPlane("yz_axis", *_position, ImVec3Normalize(up), ImVec3Normalize(at), ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool zxAxis = drawPlane("zx_axis", *_position, ImVec3Normalize(at), ImVec3Normalize(left), ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool xyAxis = drawPlane("xy_axis", *_position, left, up, xAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool yzAxis = drawPlane("yz_axis", *_position, up, at, yAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool zxAxis = drawPlane("zx_axis", *_position, at, left, zAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
 
         xAxis = xAxis ^ (xyAxis || zxAxis);
         yAxis = yAxis ^ (yzAxis || xyAxis);
