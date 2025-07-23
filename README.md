@@ -1,4 +1,7 @@
-![ImGizmo_Logo](https://github.com/user-attachments/assets/164dc89a-6e86-4051-a574-caa8cd0279bf)
+<div align="center">
+    <img src="./logo.svg" alt="" width="192" align="center" />
+    <h1 align="center">ImGizmo</h1>
+</div>
 
 ImGizmo is a Dear ImGui extension that focusing on giving the library the functionality to draw gizmos that are needed for scene manipulation, for both 3D and 2D. ImGizmo strives for great UX and bases most of its functionality and usability on the great work by [Robin-Yann Storm](https://rystorm.com/blog/translate-gizmo-design).
 
@@ -7,17 +10,14 @@ To start using ImGizmo inside of your project you just have to include ``ImGizmo
 
 ## Examples
 
-ImGizmo provides example of how this library could be used, and provides this inside of the "Examples" directory, to build the examples project/code ImGizmo uses xmake.
+ImGizmo provides example of how this library could be used, and provides this inside of the "Examples" directory, to build the examples project/code ImGizmo uses xmake..
 
-### Installing xmake
-Go to the installation guide of [xmake](https://xmake.io/#/guide/installation) and follow the installation guide of your OS.
-
-### Building and Running xmake
-Now that you have xmake installed you can now just run ``xmake`` to install all dependencies of the examples project and build the project.
+### Building and Running the examples
+You can now just run ``xmake`` in the base directory of the repository to install all dependencies for the examples, now just build and run the examples project.
 
 ```
 // build the project
-xmake
+xmake build
 
 // run the project
 xmake run
@@ -27,3 +27,6 @@ xmake run
 
 ImGizmo, just like Dear ImGui makes use of the MIT license see LICENSE.txt for more information
 
+## Get involved
+
+If you are interested in making ImGizmo better, either by reporting a bug or by requesting a feature. Please [take a look at the contribution guide](CONTRIBUTING.md).
