@@ -271,6 +271,7 @@ namespace ImGizmo {
     void End() {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+        IM_ASSERT_USER_ERROR(GImGizmo->nextItem.flags == 0, "Next item struct still contains data, remember to 'Pop' your settings before 'End' function call");
 
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
@@ -662,7 +663,7 @@ namespace ImGizmo {
     }
 
     void PopNextItemRotation() {
-        IM_ASSERT(GImGizmo->nextItem.flags & ImGizmoNextItemFlags_HasRotation && "Next item rotation is empty. Either you are trying to pop without calling 'PushNextItemRotation' or it has already been poped.");
+        IM_ASSERT_USER_ERROR(GImGizmo->nextItem.flags & ImGizmoNextItemFlags_HasRotation, "Next item rotation is empty. Either you are trying to pop without calling 'PushNextItemRotation' or it has already been poped.");
 
         GImGizmo->nextItem.flags ^= ImGizmoNextItemFlags_HasRotation;
     }
