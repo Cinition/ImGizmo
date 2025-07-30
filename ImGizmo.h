@@ -60,7 +60,7 @@ namespace ImGizmo {
 // [SECTION] ImGizmo base functions
 //-----------------------------------------------------------------------------
 
-    bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj);
+    bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj, ImVec3 _pos);
     void End();
     bool IsOver();
     bool IsUsing();
@@ -85,11 +85,10 @@ namespace ImGizmo {
 // [SECTION] 3D Space helper function
 //-----------------------------------------------------------------------------
 
-    void SetNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at);
-    void SetNextItemRotation(ImVec3* _euler);
-    void SetNextItemRotation(ImVec4* _quat);
-
-    void SetNextSpaceCameraPos(ImVec3* _pos);
+    void PushNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at);
+    void PushNextItemRotation(ImVec3* _euler);
+    void PushNextItemRotation(ImVec4* _quat);
+    void PopNextItemRotation();
 
 //-----------------------------------------------------------------------------
 // [SECTION] Predefined Gizmos

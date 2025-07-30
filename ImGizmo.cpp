@@ -23,17 +23,10 @@ enum ImGizmoDrawType {
     ImGizmoDrawType_COUNT,
 };
 
-typedef int ImGizmoNextSpaceFlags;
-enum ImGizmoNextSpaceFlags_ {
-    ImGizmoNextSpaceFlags_None = 0,
-    ImGizmoNextSpaceFlags_HasCameraPos = 1 << 0,
-};
-
 typedef int ImGizmoNextItemFlags;
 enum ImGizmoNextItemFlags_ {
     ImGizmoNextItemFlags_None = 0,
     ImGizmoNextItemFlags_HasRotation = 1 << 0,
-    ImGizmoNextItemFlags_HasCameraPos = 1 << 1,
 };
 
 
@@ -77,18 +70,12 @@ struct ImGizmoSpace {
     std::vector<ImGizmoDraw> renderList;
     const char* hoverID = nullptr;
     const char* activeID = nullptr;
+    ImVec3 cameraPos = {};
     ImVec3 hoverPos = {};
     ImVec2 initialMousePos = {};
     ImVec2 lastMousePos = {};
     bool firstMouseDownFrame = true;
     bool initialized = false;
-};
-
-struct ImGizmoNextSpace {
-    ImGizmoNextSpaceFlags flags;
-    ImVec3 cameraPos = {};
-
-    inline void Clear() { flags = ImGizmoNextSpaceFlags_None; }
 };
 
 struct ImGizmoNextItem {
@@ -100,7 +87,6 @@ struct ImGizmoNextItem {
 
 struct ImGizmoContext {
     ImGizmoSpace currentSpace;
-    ImGizmoNextSpace nextSpace;
     ImGizmoNextItem nextItem;
 };
 
@@ -250,7 +236,7 @@ namespace ImGizmo {
         GImGizmo = context;
     }
 
-    bool Begin(const char* _id, ImMat44 _viewMatrix, ImMat44 _projectionMatrix) {
+    bool Begin(const char* _id, ImMat44 _viewMatrix, ImMat44 _projectionMatrix, ImVec3 _pos) {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
@@ -273,6 +259,7 @@ namespace ImGizmo {
             current.viewMatrix = _viewMatrix;
             current.projMatrix = _projectionMatrix;
             current.drawList = window->DrawList;
+            current.cameraPos = _pos;
             current.frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + ImGui::GetMainViewport()->Size);
 
             ImGui::End();
@@ -621,7 +608,7 @@ namespace ImGizmo {
         return (activeID && activeID == _id);
     }
 
-    void SetNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at) {
+    void PushNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at) {
         ImMat44 rotation = {};
 
         rotation.m4x4[0][0] = _left->x;
@@ -638,7 +625,7 @@ namespace ImGizmo {
         GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
     }
 
-    void SetNextItemRotation(ImVec3* _euler) {
+    void PushNextItemRotation(ImVec3* _euler) {
         ImMat44 rotation = {};
 
         const float HalfPI = PI / 180.f;
@@ -665,7 +652,7 @@ namespace ImGizmo {
         GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
     }
 
-    void SetNextItemRotation(ImVec4* _quat) {
+    void PushNextItemRotation(ImVec4* _quat) {
         ImMat44 rotation = {};
 
         IM_ASSERT(false && "TODO");
@@ -674,9 +661,10 @@ namespace ImGizmo {
         GImGizmo->nextItem.flags |= ImGizmoNextItemFlags_HasRotation;
     }
 
-    void SetNextSpaceCameraPos(ImVec3* _pos) {
-        GImGizmo->nextSpace.cameraPos = *_pos;
-        GImGizmo->nextSpace.flags |= ImGizmoNextSpaceFlags_HasCameraPos;
+    void PopNextItemRotation() {
+        IM_ASSERT(GImGizmo->nextItem.flags & ImGizmoNextItemFlags_HasRotation && "Next item rotation is empty. Either you are trying to pop without calling 'PushNextItemRotation' or it has already been poped.");
+
+        GImGizmo->nextItem.flags ^= ImGizmoNextItemFlags_HasRotation;
     }
 
     bool Translate(const char *_id, ImVec3* _position) {
@@ -727,28 +715,24 @@ namespace ImGizmo {
         bool yAxisInv = false;
         bool zAxisInv = false;
 
-        if (GImGizmo->nextSpace.flags & ImGizmoNextSpaceFlags_HasCameraPos) {
-            const auto& camPos = GImGizmo->nextSpace.cameraPos;
+        const auto& camPos = GImGizmo->currentSpace.cameraPos;
 
-            const float xPlaneDistance = left.x * camPos.x + left.y * camPos.y + left.z * camPos.z;
-            const float yPlaneDistance = up.x * camPos.x + up.y * camPos.y + up.z * camPos.z;
-            const float zPlaneDistance = at.x * camPos.x + at.y * camPos.y + at.z * camPos.z;
+        const float xPlaneDistance = left.x * camPos.x + left.y * camPos.y + left.z * camPos.z;
+        const float yPlaneDistance = up.x * camPos.x + up.y * camPos.y + up.z * camPos.z;
+        const float zPlaneDistance = at.x * camPos.x + at.y * camPos.y + at.z * camPos.z;
 
-            if(xPlaneDistance < 0.f) {
-                left = -left;
-                xAxisInv = true;
-            }
-            if(yPlaneDistance < 0.f) {
-                up = -up;
-                yAxisInv = true;
-            }
-            if(zPlaneDistance < 0.f) {
-                at = -at;
-                zAxisInv = true;
-            }
+        if(xPlaneDistance < 0.f) {
+            left = -left;
+            xAxisInv = true;
         }
-
-        GImGizmo->nextItem.Clear();
+        if(yPlaneDistance < 0.f) {
+            up = -up;
+            yAxisInv = true;
+        }
+        if(zPlaneDistance < 0.f) {
+            at = -at;
+            zAxisInv = true;
+        }
 
         bool xAxis = drawAxis("x_axis", *_position, left, up, at, xAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
         bool yAxis = drawAxis("y_axis", *_position, up, at, left, yAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
