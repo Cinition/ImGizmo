@@ -19,7 +19,7 @@ Index of this file:
 struct ImVec3 {
     float x, y, z;
     constexpr ImVec3()                             : x(0.f), y(0.f), z(0.f) {}
-    constexpr ImVec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    constexpr ImVec3(float x, float y, float z) : x(x), y(y), z(z) {}
     inline ImVec2 xy() const { return ImVec2(x, y); }
 #ifdef IM_VEC3_CLASS_EXTRA
     IM_VEC3_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imgizmoconfig.h to convert back and forth between your math types and ImVec3.
@@ -57,15 +57,18 @@ namespace ImGizmo {
     void SetCurrentContext(ImGizmoContext* context);
 
 //-----------------------------------------------------------------------------
-// [SECTION] ImGizmo base functions
+// [SECTION] Space
 //-----------------------------------------------------------------------------
 
-    bool Begin(const char* _id, ImMat44 _view, ImMat44 _proj, ImVec3 _pos);
+    bool Begin(const char* id, const ImMat44& view, const ImMat44& proj, const ImVec3& pos);
     void End();
+
+//-----------------------------------------------------------------------------
+// [SECTION] Space utilities
+//-----------------------------------------------------------------------------
+
     bool IsOver();
     bool IsUsing();
-    ImVec2 ConvertTo2DCoords(const ImVec3& pos);
-    
     const char* GetHoveredID();
     const char* GetActiveID();
     ImVec3 GetHoveredPos();
@@ -73,28 +76,41 @@ namespace ImGizmo {
     ImVec2 GetLastMousePos();
 
 //-----------------------------------------------------------------------------
-// [SECTION] Drawing API
+// [SECTION] Space conversions
 //-----------------------------------------------------------------------------
 
-    bool DrawPoint(const char* _id, const ImVec3& _point, float _radius, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-    bool DrawLine(const char* _id, const ImVec3& _point1, const ImVec3& _point2, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-    bool DrawTriangle(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
-    bool DrawSquare(const char* _id, const ImVec3& _point1, const ImVec3& _point2, const ImVec3& _point3, const ImVec3& _point4, ImU32 color = ImGui::GetColorU32({1.f, 1.f, 1.f, 1.f}));
+    ImVec2 ConvertTo2DCoords(const ImVec3& pos);
 
 //-----------------------------------------------------------------------------
-// [SECTION] 3D Space helper function
+// [SECTION] Drawing Primitives
 //-----------------------------------------------------------------------------
 
-    void PushNextItemRotation(ImVec3* _left, ImVec3* _up, ImVec3* _at);
-    void PushNextItemRotation(ImVec3* _euler);
-    void PushNextItemRotation(ImVec4* _quat);
+    bool DrawPoint(const char* id, const ImVec3& point, float radius, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF );
+    bool DrawPointWithOutline(const char* id, const ImVec3& point, float radius, float thickness, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF, ImU32 out_color = 0x000000FF);
+    bool DrawLine(const char* id, const ImVec3& point1, const ImVec3& point2, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF);
+    bool DrawLineWithOutline(const char* id, const ImVec3& point1, const ImVec3& point2, float thickness, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF, ImU32 out_color = 0x000000FF);
+    bool DrawTriangle(const char* id, const ImVec3& point1, const ImVec3& point2, const ImVec3& point3, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF);
+    bool DrawTriangleWithOutline(const char* id, const ImVec3& point1, const ImVec3& point2, const ImVec3& point3, float thickness, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF, ImU32 out_color = 0x000000FF);
+    bool DrawQuad(const char* id, const ImVec3& point1, const ImVec3& point2, const ImVec3& point3, const ImVec3& point4, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF);
+    bool DrawQuadWithOutline(const char* id, const ImVec3& point1, const ImVec3& point2, const ImVec3& point3, const ImVec3& point4, float thickness, ImU32 flags = 0, ImU32 color = 0xFFFFFFFF, ImU32 out_color = 0x000000FF);
+
+//-----------------------------------------------------------------------------
+// [SECTION] Space parameters stack
+//-----------------------------------------------------------------------------
+
+    void PushNextItemRotation(ImVec3* left, ImVec3* up, ImVec3* at);
+    void PushNextItemRotation(ImVec3* euler);
+    void PushNextItemRotation(ImVec4* quat);
     void PopNextItemRotation();
 
 //-----------------------------------------------------------------------------
-// [SECTION] Predefined Gizmos
+// [SECTION] Gizmos
 //-----------------------------------------------------------------------------
 
-    bool Translate(const char* _id, ImVec3* _position);
+    bool Translate(const char* id, ImVec3* position);
+    bool Rotate(const char* id, ImVec3* position);
+    bool Scale(const char* id, ImVec3* position);
+
 }
 
 // Helpers: ImVec3 operators
