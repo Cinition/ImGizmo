@@ -2,8 +2,16 @@
 
 #include <imgui.h>
 
-struct ImVec3;
-struct ImMat44;
+struct ImVec3 {
+    float x, y, z;
+    constexpr ImVec3()                          : x(0.f), y(0.f), z(0.f) {}
+    constexpr ImVec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    inline ImVec2 xy() const { return ImVec2(x, y); }
+#ifdef IM_VEC3_CLASS_EXTRA
+    IM_VEC3_CLASS_EXTRA     // Define additional constructors and implicit cast operators in imgizmoconfig.h to convert back and forth between your math types and ImVec3.
+#endif
+};
+
 struct ImGizmoContext;
 
 namespace ImGizmo {
@@ -18,7 +26,7 @@ namespace ImGizmo {
     // Begin() = pushes a new Space/Window to context. Call End() to close the current Space/Window.
     // - handles the same as an ImGui, Begin(). Meaning that Window Manipulation functions() work here aswell.
     // - we calculate all manipulation and rendering in the End() call.
-    bool Begin(const char* id, const ImMat44& view, const ImMat44& proj, const ImVec3& cameraPosition);
+    bool Begin(const char* id, float* viewMatrix, float* projectionMatrix, const ImVec3& cameraPosition);
     void End();
 
     // Space utilities
@@ -38,15 +46,17 @@ namespace ImGizmo {
     bool DrawPoint(
         const char* id,
         const ImVec3& point,
-        float radius, float border,
-        ImU32 flags = 0, ImU32 color = 0xFFFFFFFF,
+        float radius,
+        float borderThickness,
+        ImU32 flags = 0,
+        ImU32 color = 0xFFFFFFFF,
         ImU32 borderColor = 0x000000FF
     );
     bool DrawLine(
         const char* id,
         const ImVec3& point1,
         const ImVec3& point2,
-        float border,
+        float borderThickness,
         ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
         ImU32 borderColor = 0x000000FF
@@ -56,7 +66,7 @@ namespace ImGizmo {
         const ImVec3& point1,
         const ImVec3& point2,
         const ImVec3& point3,
-        float border,
+        float borderThickness,
         ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
         ImU32 borderColor = 0x000000FF
@@ -67,7 +77,7 @@ namespace ImGizmo {
         const ImVec3& point2,
         const ImVec3& point3,
         const ImVec3& point4,
-        float border,
+        float borderThickness,
         ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
         ImU32 borderColor = 0x000000F
@@ -77,19 +87,19 @@ namespace ImGizmo {
     bool Translate(
         const char* id,
         ImVec3* value,
-        ImVec3* position = nullptr,
-        ImVec3* rotation = nullptr
+        ImVec3* position = NULL,
+        ImVec3* rotation = NULL
     );
     bool Rotate(
         const char* id,
         ImVec3* value,
-        ImVec3* position = nullptr,
-        ImVec3* rotation = nullptr
+        ImVec3* position = NULL,
+        ImVec3* rotation = NULL
     );
     bool Scale(
         const char* id,
         ImVec3* value,
-        ImVec3* position = nullptr,
-        ImVec3* rotation = nullptr
+        ImVec3* position = NULL,
+        ImVec3* rotation = NULL
     );
 }
