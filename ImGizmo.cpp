@@ -838,7 +838,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            centerPos += ImVec3Normalize(left) * diff;
+            *value += ImVec3Normalize(left) * diff;
         }
         if (yAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(up));
@@ -851,7 +851,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            centerPos += ImVec3Normalize(up) * diff;
+            *value += ImVec3Normalize(up) * diff;
         }
         if (zAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(at));
@@ -864,7 +864,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            centerPos += ImVec3Normalize(at) * diff;
+            *value += ImVec3Normalize(at) * diff;
         }
 
         active = active ^ xAxis;
