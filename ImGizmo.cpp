@@ -802,24 +802,29 @@ namespace ImGizmo {
             zAxisInv = true;
         }
 
-        bool xAxis = drawAxis("x_axis", *position, left, up, at, xAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool yAxis = drawAxis("y_axis", *position, up, at, left, yAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
-        bool zAxis = drawAxis("z_axis", *position, at, left, up, zAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        ImVec3 centerPos = *value;
+        if (position != nullptr) {
+            centerPos += *position;
+        }
 
-        bool xyAxis = drawPlane("xy_axis", *position, left, up, xAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
-        bool yzAxis = drawPlane("yz_axis", *position, up, at, yAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
-        bool zxAxis = drawPlane("zx_axis", *position, at, left, zAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool xAxis = drawAxis("x_axis", centerPos, left, up, at, xAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool yAxis = drawAxis("y_axis", centerPos, up, at, left, yAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
+        bool zAxis = drawAxis("z_axis", centerPos, at, left, up, zAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+
+        bool xyAxis = drawPlane("xy_axis", centerPos, left, up, xAxisInv, ImGui::GetColorU32({0.f,0.f,1.f,1.f}));
+        bool yzAxis = drawPlane("yz_axis", centerPos, up, at, yAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
+        bool zxAxis = drawPlane("zx_axis", centerPos, at, left, zAxisInv, ImGui::GetColorU32({0.f,1.f,0.f,1.f}));
 
         xAxis = xAxis ^ (xyAxis || zxAxis);
         yAxis = yAxis ^ (yzAxis || xyAxis);
         zAxis = zAxis ^ (zxAxis || yzAxis);
 
-        DrawPoint("center_axis", *position, 5.f, 0.f);
+        DrawPoint("center_axis", centerPos, 5.f, 0.f);
 
-        ImVec3 pos = *position;
+        ImVec3 pos = centerPos;
         ImVec2 mousePos = ImGui::GetIO().MousePos;
         ImVec2 deltaPos = GetLastMousePos();
-        ImVec2 pos1 = ConvertTo2DCoords(*position);
+        ImVec2 pos1 = ConvertTo2DCoords(centerPos);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;
         if (xAxis) {
@@ -833,7 +838,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *position += ImVec3Normalize(left) * diff;
+            centerPos += ImVec3Normalize(left) * diff;
         }
         if (yAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(up));
@@ -846,7 +851,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *position += ImVec3Normalize(up) * diff;
+            centerPos += ImVec3Normalize(up) * diff;
         }
         if (zAxis) {
             ImVec2 pos2 = ConvertTo2DCoords(pos + ImVec3Normalize(at));
@@ -859,7 +864,7 @@ namespace ImGizmo {
             float value2 = dot3 / dot2;
             float diff = value1 - value2;
 
-            *position += ImVec3Normalize(at) * diff;
+            centerPos += ImVec3Normalize(at) * diff;
         }
 
         active = active ^ xAxis;
