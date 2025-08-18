@@ -179,6 +179,36 @@ static inline ImVec3 ImMat44Pos(const ImMat44& _mat) {
 }
 
 // Helpers: ImVec3 Math Functions
+
+const float PI = 3.1415926536;
+
+static inline ImMat44 EulerToRotationMatrix(const ImVec3& euler)
+{
+    ImMat44 rotation = {};
+
+    const float HalfPI = PI / 180.f;
+    float cosX = std::cos(euler.x * HalfPI);
+    float sinX = std::sin(euler.x * HalfPI);
+    float cosY = std::cos(euler.y * HalfPI);
+    float sinY = std::sin(euler.y * HalfPI);
+    float cosZ = std::cos(euler.z * HalfPI);
+    float sinZ = std::sin(euler.z * HalfPI);
+
+    rotation.m4x4[0][0] = cosY * cosZ;
+    rotation.m4x4[0][1] = cosY * sinZ;
+    rotation.m4x4[0][2] = -sinY;
+
+    rotation.m4x4[1][0] = -cosX * sinZ + sinX * sinY * cosZ;
+    rotation.m4x4[1][1] = cosX * cosZ + sinX * sinY * sinZ;
+    rotation.m4x4[1][2] = sinX * cosY;
+
+    rotation.m4x4[2][0] = sinX * sinZ + cosX * sinY * cosZ;
+    rotation.m4x4[2][1] = -sinX * cosZ + cosX * sinY * sinZ;
+    rotation.m4x4[2][2] = cosX * cosY;
+
+    return rotation;
+}
+
 static inline ImVec3 ImVec3Transform(const ImVec3& _vec, const ImMat44& _matrix) {
     ImVec4 in;
     ImVec3 out;
@@ -244,8 +274,6 @@ static bool PointInTriangle(const ImVec2& _edgeA, const ImVec2& _edgeB, const Im
     float areaCAP = ImVec2SignedTriangleArea(_edgeC, _edgeA, _point);
     return areaABP > 0 && areaBCP > 0 && areaCAP > 0;
 }
-
-const float PI = 3.1415926536;
 
 namespace ImGizmo {
 
@@ -774,9 +802,10 @@ namespace ImGizmo {
         ImVec3 up = ImVec3(0.f, 1.f, 0.f);
         ImVec3 at = ImVec3(0.f, 0.f, 1.f);
         if(rotation != nullptr) {
-            left = ImMat44Left(*(ImMat44*)rotation);
-            up = ImMat44Up(*(ImMat44*)rotation);
-            at = ImMat44At(*(ImMat44*)rotation);
+            ImMat44 rotationMatrix = EulerToRotationMatrix(*rotation);
+            left = ImMat44Left(rotationMatrix);
+            up = ImMat44Up(rotationMatrix);
+            at = ImMat44At(rotationMatrix);
         }
 
         bool xAxisInv = false;
@@ -802,9 +831,9 @@ namespace ImGizmo {
             zAxisInv = true;
         }
 
-        ImVec3 centerPos = *value;
+        ImVec3 centerPos = ImVec3(0.f, 0.f, 0.f);
         if (position != nullptr) {
-            centerPos += *position;
+            centerPos = *position;
         }
 
         bool xAxis = drawAxis("x_axis", centerPos, left, up, at, xAxisInv, ImGui::GetColorU32({1.f,0.f,0.f,1.f}));
@@ -821,10 +850,10 @@ namespace ImGizmo {
 
         DrawPoint("center_axis", centerPos, 5.f, 0.f);
 
-        ImVec3 pos = centerPos;
+        ImVec3 pos = *value;
         ImVec2 mousePos = ImGui::GetIO().MousePos;
         ImVec2 deltaPos = GetLastMousePos();
-        ImVec2 pos1 = ConvertTo2DCoords(centerPos);
+        ImVec2 pos1 = ConvertTo2DCoords(*value);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;
         if (xAxis) {
