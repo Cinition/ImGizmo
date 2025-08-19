@@ -261,22 +261,23 @@ static inline ImVec2 ImVec2Perpendicular(const ImVec2& _vec) {
     return ImVec2(_vec.y, -_vec.x);
 }
 
-static inline float ImVec2SignedTriangleArea(const ImVec2& _edgeA, const ImVec2& _edgeB, const ImVec2& _edgeC)
+static inline bool ImVec2SignedTriangleArea(const ImVec2& a, const ImVec2& b, const ImVec2& p)
 {
-    ImVec2 ac = _edgeC - _edgeA;
-    ImVec2 abPerp = ImVec2Perpendicular(_edgeB - _edgeA);
-    return ImVec2Dot(ac, abPerp) / 2.f;
+    ImVec2 ap = p - a;
+    ImVec2 abPerp = ImVec2Perpendicular(b - a);
+    return ImVec2Dot(ap, abPerp) >= 0.f;
 }
 
 static bool PointInTriangle(const ImVec2& _edgeA, const ImVec2& _edgeB, const ImVec2& _edgeC, const ImVec2& _point) {
-    float areaABP = ImVec2SignedTriangleArea(_edgeA, _edgeB, _point);
-    float areaBCP = ImVec2SignedTriangleArea(_edgeB, _edgeC, _point);
-    float areaCAP = ImVec2SignedTriangleArea(_edgeC, _edgeA, _point);
-    return areaABP > 0 && areaBCP > 0 && areaCAP > 0;
+    bool areaAB = ImVec2SignedTriangleArea(_edgeA, _edgeB, _point);
+    bool areaBC = ImVec2SignedTriangleArea(_edgeB, _edgeC, _point);
+    bool areaCA = ImVec2SignedTriangleArea(_edgeC, _edgeA, _point);
+
+    return areaAB == areaBC && areaBC == areaCA;
 }
 
-namespace ImGizmo {
-
+namespace ImGizmo
+{
     ImGizmoContext* CreateContext() {
         ImGizmoContext* context = IM_NEW(ImGizmoContext)();
         InitializeContext(context);
@@ -423,7 +424,7 @@ namespace ImGizmo {
                 }
                 case ImGizmoDrawType_Quad: {
                     bool inTriangle1 = PointInTriangle(object.Quad.pos1.xy(),object.Quad.pos2.xy(), object.Quad.pos3.xy(), mousePos);
-                    bool inTriangle2 = PointInTriangle(object.Quad.pos3.xy(),object.Quad.pos4.xy(), object.Quad.pos1.xy(), mousePos);
+                    bool inTriangle2 = PointInTriangle(object.Quad.pos1.xy(),object.Quad.pos3.xy(), object.Quad.pos4.xy(), mousePos);
 
                     if(inTriangle1 || inTriangle2) {
                         hoverID = object.id;
