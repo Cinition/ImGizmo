@@ -54,7 +54,8 @@ struct ImMat44
 #endif
 };
 
-enum ImGizmoDrawType {
+enum ImGizmoDrawType
+{
     ImGizmoDrawType_Point,
     ImGizmoDrawType_Line,
     ImGizmoDrawType_Triangle,
@@ -62,22 +63,28 @@ enum ImGizmoDrawType {
     ImGizmoDrawType_COUNT,
 };
 
-struct ImGizmoDraw {
-    union {
-        struct {
+struct ImGizmoDraw
+{
+    union
+    {
+        struct
+        {
             ImVec3 pos;
             float radius;
         } Point;
-        struct {
+        struct
+        {
             ImVec3 pos1;
             ImVec3 pos2;
         } Line;
-        struct {
+        struct
+        {
             ImVec3 pos1;
             ImVec3 pos2;
             ImVec3 pos3;
         } Triangle;
-        struct {
+        struct
+        {
             ImVec3 pos1;
             ImVec3 pos2;
             ImVec3 pos3;
@@ -94,7 +101,8 @@ struct ImGizmoDraw {
     float depth;
 };
 
-struct ImGizmoSpace {
+struct ImGizmoSpace
+{
     ImGuiID ID;
     ImMat44* viewMatrix;
     ImMat44* projMatrix;
@@ -112,7 +120,8 @@ struct ImGizmoSpace {
     bool initialized = false;
 };
 
-struct ImGizmoContext {
+struct ImGizmoContext
+{
     ImGizmoSpace currentSpace;
 };
 
@@ -134,48 +143,52 @@ static inline ImVec3& operator/=(ImVec3& lhs, const ImVec3& rhs)        { lhs.x 
 static inline bool    operator==(const ImVec3& lhs, const ImVec3& rhs)  { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z; }
 static inline bool    operator!=(const ImVec3& lhs, const ImVec3& rhs)  { return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z; }
 
-static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& _lhs, const ImMat44& _rhs)
+static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& lhs, const ImMat44& rhs)
 {
     ImMat44 out;
 
-    out.m16[0] = _lhs.m16[0] * _rhs.m16[0] + _lhs.m16[1] * _rhs.m16[4] + _lhs.m16[2] * _rhs.m16[8] + _lhs.m16[3] * _rhs.m16[12];
-    out.m16[1] = _lhs.m16[0] * _rhs.m16[1] + _lhs.m16[1] * _rhs.m16[5] + _lhs.m16[2] * _rhs.m16[9] + _lhs.m16[3] * _rhs.m16[13];
-    out.m16[2] = _lhs.m16[0] * _rhs.m16[2] + _lhs.m16[1] * _rhs.m16[6] + _lhs.m16[2] * _rhs.m16[10] + _lhs.m16[3] * _rhs.m16[14];
-    out.m16[3] = _lhs.m16[0] * _rhs.m16[3] + _lhs.m16[1] * _rhs.m16[7] + _lhs.m16[2] * _rhs.m16[11] + _lhs.m16[3] * _rhs.m16[15];
+    out.m16[0] = lhs.m16[0] * rhs.m16[0] + lhs.m16[1] * rhs.m16[4] + lhs.m16[2] * rhs.m16[8] + lhs.m16[3] * rhs.m16[12];
+    out.m16[1] = lhs.m16[0] * rhs.m16[1] + lhs.m16[1] * rhs.m16[5] + lhs.m16[2] * rhs.m16[9] + lhs.m16[3] * rhs.m16[13];
+    out.m16[2] = lhs.m16[0] * rhs.m16[2] + lhs.m16[1] * rhs.m16[6] + lhs.m16[2] * rhs.m16[10] + lhs.m16[3] * rhs.m16[14];
+    out.m16[3] = lhs.m16[0] * rhs.m16[3] + lhs.m16[1] * rhs.m16[7] + lhs.m16[2] * rhs.m16[11] + lhs.m16[3] * rhs.m16[15];
 
-    out.m16[4] = _lhs.m16[4] * _rhs.m16[0] + _lhs.m16[5] * _rhs.m16[4] + _lhs.m16[6] * _rhs.m16[8] + _lhs.m16[7] * _rhs.m16[12];
-    out.m16[5] = _lhs.m16[4] * _rhs.m16[1] + _lhs.m16[5] * _rhs.m16[5] + _lhs.m16[6] * _rhs.m16[9] + _lhs.m16[7] * _rhs.m16[13];
-    out.m16[6] = _lhs.m16[4] * _rhs.m16[2] + _lhs.m16[5] * _rhs.m16[6] + _lhs.m16[6] * _rhs.m16[10] + _lhs.m16[7] * _rhs.m16[14];
-    out.m16[7] = _lhs.m16[4] * _rhs.m16[3] + _lhs.m16[5] * _rhs.m16[7] + _lhs.m16[6] * _rhs.m16[11] + _lhs.m16[7] * _rhs.m16[15];
+    out.m16[4] = lhs.m16[4] * rhs.m16[0] + lhs.m16[5] * rhs.m16[4] + lhs.m16[6] * rhs.m16[8] + lhs.m16[7] * rhs.m16[12];
+    out.m16[5] = lhs.m16[4] * rhs.m16[1] + lhs.m16[5] * rhs.m16[5] + lhs.m16[6] * rhs.m16[9] + lhs.m16[7] * rhs.m16[13];
+    out.m16[6] = lhs.m16[4] * rhs.m16[2] + lhs.m16[5] * rhs.m16[6] + lhs.m16[6] * rhs.m16[10] + lhs.m16[7] * rhs.m16[14];
+    out.m16[7] = lhs.m16[4] * rhs.m16[3] + lhs.m16[5] * rhs.m16[7] + lhs.m16[6] * rhs.m16[11] + lhs.m16[7] * rhs.m16[15];
 
-    out.m16[8] = _lhs.m16[8] * _rhs.m16[0] + _lhs.m16[9] * _rhs.m16[4] + _lhs.m16[10] * _rhs.m16[8] + _lhs.m16[11] * _rhs.m16[12];
-    out.m16[9] = _lhs.m16[8] * _rhs.m16[1] + _lhs.m16[9] * _rhs.m16[5] + _lhs.m16[10] * _rhs.m16[9] + _lhs.m16[11] * _rhs.m16[13];
-    out.m16[10] = _lhs.m16[8] * _rhs.m16[2] + _lhs.m16[9] * _rhs.m16[6] + _lhs.m16[10] * _rhs.m16[10] + _lhs.m16[11] * _rhs.m16[14];
-    out.m16[11] = _lhs.m16[8] * _rhs.m16[3] + _lhs.m16[9] * _rhs.m16[7] + _lhs.m16[10] * _rhs.m16[11] + _lhs.m16[11] * _rhs.m16[15];
+    out.m16[8] = lhs.m16[8] * rhs.m16[0] + lhs.m16[9] * rhs.m16[4] + lhs.m16[10] * rhs.m16[8] + lhs.m16[11] * rhs.m16[12];
+    out.m16[9] = lhs.m16[8] * rhs.m16[1] + lhs.m16[9] * rhs.m16[5] + lhs.m16[10] * rhs.m16[9] + lhs.m16[11] * rhs.m16[13];
+    out.m16[10] = lhs.m16[8] * rhs.m16[2] + lhs.m16[9] * rhs.m16[6] + lhs.m16[10] * rhs.m16[10] + lhs.m16[11] * rhs.m16[14];
+    out.m16[11] = lhs.m16[8] * rhs.m16[3] + lhs.m16[9] * rhs.m16[7] + lhs.m16[10] * rhs.m16[11] + lhs.m16[11] * rhs.m16[15];
 
-    out.m16[12] = _lhs.m16[12] * _rhs.m16[0] + _lhs.m16[13] * _rhs.m16[4] + _lhs.m16[14] * _rhs.m16[8] + _lhs.m16[15] * _rhs.m16[12];
-    out.m16[13] = _lhs.m16[12] * _rhs.m16[1] + _lhs.m16[13] * _rhs.m16[5] + _lhs.m16[14] * _rhs.m16[9] + _lhs.m16[15] * _rhs.m16[13];
-    out.m16[14] = _lhs.m16[12] * _rhs.m16[2] + _lhs.m16[13] * _rhs.m16[6] + _lhs.m16[14] * _rhs.m16[10] + _lhs.m16[15] * _rhs.m16[14];
-    out.m16[15] = _lhs.m16[12] * _rhs.m16[3] + _lhs.m16[13] * _rhs.m16[7] + _lhs.m16[14] * _rhs.m16[11] + _lhs.m16[15] * _rhs.m16[15];
+    out.m16[12] = lhs.m16[12] * rhs.m16[0] + lhs.m16[13] * rhs.m16[4] + lhs.m16[14] * rhs.m16[8] + lhs.m16[15] * rhs.m16[12];
+    out.m16[13] = lhs.m16[12] * rhs.m16[1] + lhs.m16[13] * rhs.m16[5] + lhs.m16[14] * rhs.m16[9] + lhs.m16[15] * rhs.m16[13];
+    out.m16[14] = lhs.m16[12] * rhs.m16[2] + lhs.m16[13] * rhs.m16[6] + lhs.m16[14] * rhs.m16[10] + lhs.m16[15] * rhs.m16[14];
+    out.m16[15] = lhs.m16[12] * rhs.m16[3] + lhs.m16[13] * rhs.m16[7] + lhs.m16[14] * rhs.m16[11] + lhs.m16[15] * rhs.m16[15];
 
     return out;
 }
 
 // Helpers: ImMat44 Math Functions
-static inline ImVec3 ImMat44Left(const ImMat44& _mat) {
-    return ImVec3(_mat.m16[0], _mat.m16[1], _mat.m16[2]);
+static inline ImVec3 ImMat44Left(const ImMat44& matrix)
+{
+    return ImVec3(matrix.m16[0], matrix.m16[1], matrix.m16[2]);
 }
 
-static inline ImVec3 ImMat44Up(const ImMat44& _mat) {
-    return ImVec3(_mat.m16[4], _mat.m16[5], _mat.m16[6]);
+static inline ImVec3 ImMat44Up(const ImMat44& matrix)
+{
+    return ImVec3(matrix.m16[4], matrix.m16[5], matrix.m16[6]);
 }
 
-static inline ImVec3 ImMat44At(const ImMat44& _mat) {
-    return ImVec3(_mat.m16[8], _mat.m16[9], _mat.m16[10]);
+static inline ImVec3 ImMat44At(const ImMat44& matrix)
+{
+    return ImVec3(matrix.m16[8], matrix.m16[9], matrix.m16[10]);
 }
 
-static inline ImVec3 ImMat44Pos(const ImMat44& _mat) {
-    return ImVec3(_mat.m16[12], _mat.m16[13], _mat.m16[14]);
+static inline ImVec3 ImMat44Pos(const ImMat44& matrix)
+{
+    return ImVec3(matrix.m16[12], matrix.m16[13], matrix.m16[14]);
 }
 
 // Helpers: ImVec3 Math Functions
@@ -209,14 +222,15 @@ static inline ImMat44 EulerToRotationMatrix(const ImVec3& euler)
     return rotation;
 }
 
-static inline ImVec3 ImVec3Transform(const ImVec3& _vec, const ImMat44& _matrix) {
+static inline ImVec3 ImVec3Transform(const ImVec3& vec, const ImMat44& matrix)
+{
     ImVec4 in;
     ImVec3 out;
 
-    in.x = _vec.x * _matrix.m4x4[0][0] + _vec.y * _matrix.m4x4[1][0] + _vec.z * _matrix.m4x4[2][0] + _matrix.m4x4[3][0];
-    in.y = _vec.x * _matrix.m4x4[0][1] + _vec.y * _matrix.m4x4[1][1] + _vec.z * _matrix.m4x4[2][1] + _matrix.m4x4[3][1];
-    in.z = _vec.x * _matrix.m4x4[0][2] + _vec.y * _matrix.m4x4[1][2] + _vec.z * _matrix.m4x4[2][2] + _matrix.m4x4[3][2];
-    in.w = _vec.x * _matrix.m4x4[0][3] + _vec.y * _matrix.m4x4[1][3] + _vec.z * _matrix.m4x4[2][3] + _matrix.m4x4[3][3];
+    in.x = vec.x * matrix.m4x4[0][0] + vec.y * matrix.m4x4[1][0] + vec.z * matrix.m4x4[2][0] + matrix.m4x4[3][0];
+    in.y = vec.x * matrix.m4x4[0][1] + vec.y * matrix.m4x4[1][1] + vec.z * matrix.m4x4[2][1] + matrix.m4x4[3][1];
+    in.z = vec.x * matrix.m4x4[0][2] + vec.y * matrix.m4x4[1][2] + vec.z * matrix.m4x4[2][2] + matrix.m4x4[3][2];
+    in.w = vec.x * matrix.m4x4[0][3] + vec.y * matrix.m4x4[1][3] + vec.z * matrix.m4x4[2][3] + matrix.m4x4[3][3];
 
     in.x /= in.w;
     in.y /= in.w;
@@ -229,22 +243,26 @@ static inline ImVec3 ImVec3Transform(const ImVec3& _vec, const ImMat44& _matrix)
     return out;
 }
 
-static inline ImVec3 ImVec3Cross(const ImVec3& _vec1, const ImVec3& _vec2) {
+static inline ImVec3 ImVec3Cross(const ImVec3& vec1, const ImVec3& vec2)
+{
     ImVec3 out;
-    out.x = _vec1.y * _vec2.z - _vec1.z * _vec2.y;
-    out.y = _vec1.z * _vec2.x - _vec1.x * _vec2.z;
-    out.z = _vec1.x * _vec2.y - _vec1.y * _vec2.x;
+    out.x = vec1.y * vec2.z - vec1.z * vec2.y;
+    out.y = vec1.z * vec2.x - vec1.x * vec2.z;
+    out.z = vec1.x * vec2.y - vec1.y * vec2.x;
     return out;
 }
 
-static inline float ImVec3Magnitude(const ImVec3& _vec) {
-    return sqrt(pow(_vec.x, 2.f) + pow(_vec.y, 2.f) + pow(_vec.z, 2.f));
+static inline float ImVec3Magnitude(const ImVec3& vec)
+{
+    return sqrt(pow(vec.x, 2.f) + pow(vec.y, 2.f) + pow(vec.z, 2.f));
 }
 
-static inline ImVec3 ImVec3Normalize(const ImVec3& _vec) {
-    ImVec3 out = _vec;
+static inline ImVec3 ImVec3Normalize(const ImVec3& vec)
+{
+    ImVec3 out = vec;
     const float mag = ImVec3Magnitude(out);
-    if (mag != 0.f) {
+    if (mag != 0.f)
+    {
         out.x /= mag;
         out.y /= mag;
         out.z /= mag;
@@ -253,12 +271,14 @@ static inline ImVec3 ImVec3Normalize(const ImVec3& _vec) {
 }
 
 // Helpers: ImVec2 Math Functions
-static inline float ImVec2Dot(const ImVec2& _vec1, const ImVec2& _vec2) {
-    return _vec1.x * _vec2.x + _vec1.y * _vec2.y;
+static inline float ImVec2Dot(const ImVec2& vec1, const ImVec2& vec2)
+{
+    return vec1.x * vec2.x + vec1.y * vec2.y;
 }
 
-static inline ImVec2 ImVec2Perpendicular(const ImVec2& _vec) {
-    return ImVec2(_vec.y, -_vec.x);
+static inline ImVec2 ImVec2Perpendicular(const ImVec2& vec)
+{
+    return ImVec2(vec.y, -vec.x);
 }
 
 static inline bool ImVec2SignedTriangleArea(const ImVec2& a, const ImVec2& b, const ImVec2& p)
@@ -268,45 +288,54 @@ static inline bool ImVec2SignedTriangleArea(const ImVec2& a, const ImVec2& b, co
     return ImVec2Dot(ap, abPerp) >= 0.f;
 }
 
-static bool PointInTriangle(const ImVec2& _edgeA, const ImVec2& _edgeB, const ImVec2& _edgeC, const ImVec2& _point) {
-    bool areaAB = ImVec2SignedTriangleArea(_edgeA, _edgeB, _point);
-    bool areaBC = ImVec2SignedTriangleArea(_edgeB, _edgeC, _point);
-    bool areaCA = ImVec2SignedTriangleArea(_edgeC, _edgeA, _point);
+static bool PointInTriangle(const ImVec2& edgeA, const ImVec2& edgeB, const ImVec2& edgeC, const ImVec2& point)
+{
+    bool areaAB = ImVec2SignedTriangleArea(edgeA, edgeB, point);
+    bool areaBC = ImVec2SignedTriangleArea(edgeB, edgeC, point);
+    bool areaCA = ImVec2SignedTriangleArea(edgeC, edgeA, point);
 
     return areaAB == areaBC && areaBC == areaCA;
 }
 
 namespace ImGizmo
 {
-    ImGizmoContext* CreateContext() {
+    ImGizmoContext* CreateContext()
+    {
         ImGizmoContext* context = IM_NEW(ImGizmoContext)();
         InitializeContext(context);
         context->currentSpace.initialized = false;
-        if (GImGizmo == nullptr) {
+        if (GImGizmo == nullptr)
+        {
             SetCurrentContext(context);
         }
         return context;
     }
 
-    void DestroyContext(ImGizmoContext* context) {
-        if (context == nullptr) {
+    void DestroyContext(ImGizmoContext* context)
+    {
+        if (context == nullptr)
+        {
             context = GImGizmo;
         }
-        if (context == GImGizmo) {
+        if (context == GImGizmo)
+        {
             SetCurrentContext(nullptr);
         }
         IM_DELETE(GImGizmo);
     }
 
-    ImGizmoContext* GetCurrentContext() {
+    ImGizmoContext* GetCurrentContext()
+    {
         return GImGizmo;
     }
 
-    void SetCurrentContext(ImGizmoContext* context) {
+    void SetCurrentContext(ImGizmoContext* context)
+    {
         GImGizmo = context;
     }
 
-    bool Begin(const char* id, float* viewMatrix, float* projectionMatrix, const ImVec3& cameraPosition) {
+    bool Begin(const char* id, float* viewMatrix, float* projectionMatrix, const ImVec3& cameraPosition)
+    {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == false, "You are trying to create a ImGizmo space inside of an ImGizmo space, which isn't allowed");
 
@@ -322,7 +351,8 @@ namespace ImGizmo
         ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
         ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
 
-        if(ImGui::Begin(id, NULL, flags)) {
+        if(ImGui::Begin(id, NULL, flags))
+        {
             ImGuiWindow* window = g.CurrentWindow;
 
             current.initialized = true;
@@ -338,7 +368,8 @@ namespace ImGizmo
         return current.initialized;
     }
 
-    void End() {
+    void End()
+    {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace.initialized == true, "You are trying to end the current ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
 
@@ -354,27 +385,36 @@ namespace ImGizmo
         const char* activeID = gz.currentSpace.activeID;
         const char* hoverID = (activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
 
-        for(const auto& object : gz.currentSpace.renderList) {
-            IM_ASSERT_USER_ERROR(object.type != ImGizmoDrawType_COUNT, "ImGizmo is trying to render an unknown object.");
+        for(const auto& object : gz.currentSpace.renderList)
+        {
+            IM_ASSERT_USER_ERROR(object.type < ImGizmoDrawType_COUNT, "ImGizmo is trying to render an unknown object.");
 
-            switch (object.type) {
+            switch (object.type)
+            {
                 case ImGizmoDrawType_Point:
+                {
                     drawList._PathArcToFastEx(object.Point.pos.xy(), object.Point.radius, 0, IM_DRAWLIST_ARCFAST_SAMPLE_MAX, 0);
                     drawList.AddConvexPolyFilled(drawList._Path.Data, drawList._Path.Size, object.color);
                     drawList.PathStroke(object.borderColor, ImDrawFlags_Closed, object.borderThickness);
                     break;
+                }
                 case ImGizmoDrawType_Line:
+                {
                     drawList.AddLine(object.Line.pos1.xy(), object.Line.pos2.xy(), object.borderColor, object.borderThickness * 2.f);
                     drawList.AddLine(object.Line.pos1.xy(), object.Line.pos2.xy(), object.color, object.borderThickness);
                     break;
+                }
                 case ImGizmoDrawType_Triangle:
+                {
                     drawList.PathLineTo(object.Triangle.pos1.xy());
                     drawList.PathLineTo(object.Triangle.pos2.xy());
                     drawList.PathLineTo(object.Triangle.pos3.xy());
                     drawList.AddConvexPolyFilled(drawList._Path.Data, drawList._Path.Size, object.color);
                     drawList.PathStroke(object.borderColor, ImDrawFlags_Closed, object.borderThickness);
                     break;
+                }
                 case ImGizmoDrawType_Quad:
+                {
                     drawList.PathLineTo(object.Quad.pos1.xy());
                     drawList.PathLineTo(object.Quad.pos2.xy());
                     drawList.PathLineTo(object.Quad.pos3.xy());
@@ -382,23 +422,28 @@ namespace ImGizmo
                     drawList.AddConvexPolyFilled(drawList._Path.Data, drawList._Path.Size, object.color);
                     drawList.PathStroke(object.borderColor, ImDrawFlags_Closed, object.borderThickness);
                     break;
+                }
                 default: break;
             }
 
-            if (hoverID != nullptr && hoverID != object.id) {
+            if (hoverID != nullptr && hoverID != object.id)
+            {
                 continue;
             }
 
-            switch (object.type) {
-                case ImGizmoDrawType_Point: {
+            switch (object.type)
+            {
+                case ImGizmoDrawType_Point:
+                {
                     float mag = abs(pow(mousePos.x - object.Point.pos.x, 2.f) + pow(mousePos.y - object.Point.pos.y, 2.f));
-
-                    if (mag < object.Point.radius) {
+                    if (mag < object.Point.radius)
+                    {
                         hoverID = object.id;
                     }
                     break;
                 }
-                case ImGizmoDrawType_Line: {
+                case ImGizmoDrawType_Line:
+                {
                     ImVec2 pos1ToMouse = mousePos - object.Line.pos1.xy();
                     ImVec2 pos1ToPos2 = object.Line.pos2.xy() - object.Line.pos1.xy();
 
@@ -409,24 +454,27 @@ namespace ImGizmo
                     ImVec2 proj = pos1ToPos2 * clamp + object.Line.pos1.xy();
                     float mag = pow(mousePos.x - proj.x, 2.f) + pow(mousePos.y - proj.y, 2.f);
 
-                    if (mag < 5.f) {
+                    if (mag < 5.f)
+                    {
                         hoverID = object.id;
                     }
                     break;
                 }
-                case ImGizmoDrawType_Triangle: {
+                case ImGizmoDrawType_Triangle:
+                {
                     bool inTriangle = PointInTriangle(object.Triangle.pos1.xy(), object.Triangle.pos2.xy(), object.Triangle.pos3.xy(), mousePos);
-
-                    if(inTriangle) {
+                    if(inTriangle)
+                    {
                         hoverID = object.id;
                     }
                     break;
                 }
-                case ImGizmoDrawType_Quad: {
+                case ImGizmoDrawType_Quad:
+                {
                     bool inTriangle1 = PointInTriangle(object.Quad.pos1.xy(),object.Quad.pos2.xy(), object.Quad.pos3.xy(), mousePos);
                     bool inTriangle2 = PointInTriangle(object.Quad.pos1.xy(),object.Quad.pos3.xy(), object.Quad.pos4.xy(), mousePos);
-
-                    if(inTriangle1 || inTriangle2) {
+                    if(inTriangle1 || inTriangle2)
+                    {
                         hoverID = object.id;
                     }
                     break;
@@ -446,7 +494,8 @@ namespace ImGizmo
             gz.currentSpace.activeID = hoverID;
             gz.currentSpace.firstMouseDownFrame = false;
         }
-        else if (mouseDown == false) {
+        else if (mouseDown == false)
+        {
             gz.currentSpace.hoverID = hoverID;
             gz.currentSpace.activeID = nullptr;
             gz.currentSpace.firstMouseDownFrame = true;
@@ -455,41 +504,49 @@ namespace ImGizmo
         gz.currentSpace.lastMousePos = mousePos;
     }
 
-    bool IsOver() {
+    bool IsOver()
+    {
         return (GImGizmo->currentSpace.hoverID == nullptr ? false : true);
     }
 
-    bool IsUsing() {
+    bool IsUsing()
+    {
         return (GImGizmo->currentSpace.activeID == nullptr ? false : true);
     }
 
-    const char* GetHoveredID() {
+    const char* GetHoveredID()
+    {
         if(GImGizmo->currentSpace.hoverID == nullptr)
             return nullptr;
 
         return GImGizmo->currentSpace.hoverID;
     }
 
-    const char* GetActiveID() {
+    const char* GetActiveID()
+    {
         if(GImGizmo->currentSpace.activeID == nullptr)
             return nullptr;
 
         return GImGizmo->currentSpace.activeID;
     }
 
-    ImVec3 GetHoveredPos() {
+    ImVec3 GetHoveredPos()
+    {
         return GImGizmo->currentSpace.hoverPos;
     }
 
-    ImVec2 GetUsingStartPos() {
+    ImVec2 GetUsingStartPos()
+    {
         return GImGizmo->currentSpace.initialMousePos;
     }
 
-    ImVec2 GetLastMousePos() {
+    ImVec2 GetLastMousePos()
+    {
         return GImGizmo->currentSpace.lastMousePos;
     }
 
-    ImVec2 ConvertTo2DCoords(const ImVec3& pos) {
+    ImVec2 ConvertTo2DCoords(const ImVec3& pos)
+    {
         const ImMat44& viewMatrix = *GImGizmo->currentSpace.viewMatrix;
         const ImMat44& projMatrix = *GImGizmo->currentSpace.projMatrix;
 
@@ -509,10 +566,10 @@ namespace ImGizmo
         const char* id,
         const ImVec3& point,
         float radius,
-        float borderThickness,
-        ImU32 flags,
         ImU32 color,
-        ImU32 borderColor
+        float borderThickness,
+        ImU32 borderColor,
+        ImU32 flags
     )
     {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -557,10 +614,10 @@ namespace ImGizmo
         const char* id,
         const ImVec3& point1,
         const ImVec3& point2,
-        float borderThickness,
-        ImU32 flags,
         ImU32 color,
-        ImU32 borderColor
+        float borderThickness,
+        ImU32 borderColor,
+        ImU32 flags
     )
     {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -612,10 +669,10 @@ namespace ImGizmo
         const ImVec3& point1,
         const ImVec3& point2,
         const ImVec3& point3,
-        float borderThickness,
-        ImU32 flags,
         ImU32 color,
-        ImU32 borderColor
+        float borderThickness,
+        ImU32 borderColor,
+        ImU32 flags
     )
     {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -675,10 +732,10 @@ namespace ImGizmo
         const ImVec3& point2,
         const ImVec3& point3,
         const ImVec3& point4,
-        float borderThickness,
-        ImU32 flags,
         ImU32 color,
-        ImU32 borderColor
+        float borderThickness,
+        ImU32 borderColor,
+        ImU32 flags
     )
     {
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
@@ -744,8 +801,8 @@ namespace ImGizmo
     bool Translate(
         const char* id,
         ImVec3* value,
-        ImVec3* position,
-        ImVec3* rotation
+        const ImVec3* position,
+        const ImVec3* rotation
     )
     {
         bool active = false;
@@ -770,9 +827,9 @@ namespace ImGizmo
             }
 
             bool active = false;
-            active = active ^ DrawLine(id, p1, p2, 2.f, 0, innerColor, borderColor);
-            active = active ^ DrawTriangle(id, p3, p4, p2, 2.f, 0, innerColor, borderColor);
-            active = active ^ DrawTriangle(id, p3, p2, p5, 2.f, 0, innerColor, borderColor);
+            active = active ^ DrawLine(id, p1, p2, innerColor, 1.f, borderColor);
+            active = active ^ DrawTriangle(id, p3, p4, p2, innerColor, 1.f, borderColor);
+            active = active ^ DrawTriangle(id, p3, p2, p5, innerColor, 1.f, borderColor);
 
             return active;
         };
@@ -796,7 +853,7 @@ namespace ImGizmo
                 borderColor = color;
             }
 
-            return DrawQuad(id, p1, p2, p3, p4, 2.f, 0, innerColor, borderColor);
+            return DrawQuad(id, p1, p2, p3, p4, innerColor, 1.f, borderColor);
         };
 
         ImVec3 left = ImVec3(1.f, 0.f, 0.f);

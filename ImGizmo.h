@@ -47,29 +47,29 @@ namespace ImGizmo {
         const char* id,
         const ImVec3& point,
         float radius,
-        float borderThickness,
-        ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
-        ImU32 borderColor = 0x000000FF
+        float borderThickness = 1.f,
+        ImU32 borderColor = 0x000000FF,
+        ImU32 flags = 0
     );
     bool DrawLine(
         const char* id,
         const ImVec3& point1,
         const ImVec3& point2,
-        float borderThickness,
-        ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
-        ImU32 borderColor = 0x000000FF
+        float borderThickness = 1.f,
+        ImU32 borderColor = 0x000000FF,
+        ImU32 flags = 0
     );
     bool DrawTriangle(
         const char* id,
         const ImVec3& point1,
         const ImVec3& point2,
         const ImVec3& point3,
-        float borderThickness,
-        ImU32 flags = 0,
         ImU32 color = 0xFFFFFFFF,
-        ImU32 borderColor = 0x000000FF
+        float borderThickness = 1.f,
+        ImU32 borderColor = 0x000000FF,
+        ImU32 flags = 0
     );
     bool DrawQuad(
         const char* id,
@@ -77,29 +77,29 @@ namespace ImGizmo {
         const ImVec3& point2,
         const ImVec3& point3,
         const ImVec3& point4,
-        float borderThickness,
-        ImU32 flags = 0,
-        ImU32 color = 0xFFFFFFFF,
-        ImU32 borderColor = 0x000000F
+        ImU32 color = 0xffffffff,
+        float borderThickness = 1.f,
+        ImU32 borderColor = 0x000000ff,
+        ImU32 flags = 0
     );
 
     // Predefined Gizmos
     bool Translate(
         const char* id,
         ImVec3* value,
-        ImVec3* position = NULL,
-        ImVec3* rotation = NULL
+        const ImVec3* position = NULL,
+        const ImVec3* rotation = NULL
     );
     bool Rotate(
         const char* id,
         ImVec3* value,
-        ImVec3* position = NULL,
-        ImVec3* rotation = NULL
+        const ImVec3* position = NULL,
+        const ImVec3* rotation = NULL
     );
     bool Scale(
         const char* id,
         ImVec3* value,
-        ImVec3* position = NULL,
-        ImVec3* rotation = NULL
+        const ImVec3* position = NULL,
+        const ImVec3* rotation = NULL
     );
 }
