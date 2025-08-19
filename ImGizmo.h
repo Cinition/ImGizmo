@@ -40,7 +40,6 @@ namespace ImGizmo {
 
     // Space conversions
     ImVec2 Convert3DTo2D(const ImVec3& pos);
-    ImVec3 Convert2DTo3D(const ImVec3& pos);
 
     // Drawing Primitives
     bool DrawPoint(
