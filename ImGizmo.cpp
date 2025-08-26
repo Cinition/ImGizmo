@@ -118,6 +118,7 @@ struct ImGizmoSpace
     ImVec2 lastMousePos = {};
     bool firstMouseDownFrame = true;
     bool initialized = false;
+    float nearClip = 0.1f;
 };
 
 struct ImGizmoContext
@@ -143,7 +144,8 @@ static inline ImVec3& operator/=(ImVec3& lhs, const ImVec3& rhs)        { lhs.x 
 static inline bool    operator==(const ImVec3& lhs, const ImVec3& rhs)  { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z; }
 static inline bool    operator!=(const ImVec3& lhs, const ImVec3& rhs)  { return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z; }
 
-static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& lhs, const ImMat44& rhs)
+// Helpers: ImMat44 Math Functions
+static inline ImMat44 ImMat44Multiplication(const ImMat44& lhs, const ImMat44& rhs)
 {
     ImMat44 out;
 
@@ -170,7 +172,11 @@ static inline ImMat44 FPU_MatrixF_x_MatrixF(const ImMat44& lhs, const ImMat44& r
     return out;
 }
 
-// Helpers: ImMat44 Math Functions
+static inline ImMat44 ImMat44Invert(const ImMat44& matrix)
+{
+    //TODO
+}
+
 static inline ImVec3 ImMat44Left(const ImMat44& matrix)
 {
     return ImVec3(matrix.m16[0], matrix.m16[1], matrix.m16[2]);
@@ -222,15 +228,22 @@ static inline ImMat44 EulerToRotationMatrix(const ImVec3& euler)
     return rotation;
 }
 
+static inline ImVec4 ImVec4Transform(const ImVec4& vec, const ImMat44& matrix)
+{
+    ImVec4 out;
+
+    out.x = vec.x * matrix.m4x4[0][0] + vec.y * matrix.m4x4[1][0] + vec.z * matrix.m4x4[2][0] + vec.w * matrix.m4x4[3][0];
+    out.y = vec.x * matrix.m4x4[0][1] + vec.y * matrix.m4x4[1][1] + vec.z * matrix.m4x4[2][1] + vec.w * matrix.m4x4[3][1];
+    out.z = vec.x * matrix.m4x4[0][2] + vec.y * matrix.m4x4[1][2] + vec.z * matrix.m4x4[2][2] + vec.w * matrix.m4x4[3][2];
+    out.w = vec.x * matrix.m4x4[0][3] + vec.y * matrix.m4x4[1][3] + vec.z * matrix.m4x4[2][3] + vec.w * matrix.m4x4[3][3];
+
+    return out;
+}
+
 static inline ImVec3 ImVec3Transform(const ImVec3& vec, const ImMat44& matrix)
 {
-    ImVec4 in;
+    ImVec4 in = ImVec4Transform(ImVec4(vec.x, vec.y, vec.z, 1.f), matrix);
     ImVec3 out;
-
-    in.x = vec.x * matrix.m4x4[0][0] + vec.y * matrix.m4x4[1][0] + vec.z * matrix.m4x4[2][0] + matrix.m4x4[3][0];
-    in.y = vec.x * matrix.m4x4[0][1] + vec.y * matrix.m4x4[1][1] + vec.z * matrix.m4x4[2][1] + matrix.m4x4[3][1];
-    in.z = vec.x * matrix.m4x4[0][2] + vec.y * matrix.m4x4[1][2] + vec.z * matrix.m4x4[2][2] + matrix.m4x4[3][2];
-    in.w = vec.x * matrix.m4x4[0][3] + vec.y * matrix.m4x4[1][3] + vec.z * matrix.m4x4[2][3] + matrix.m4x4[3][3];
 
     in.x /= in.w;
     in.y /= in.w;
@@ -241,6 +254,11 @@ static inline ImVec3 ImVec3Transform(const ImVec3& vec, const ImMat44& matrix)
     out.z = in.z;
 
     return out;
+}
+
+static inline float ImVec3Dot(const ImVec3& vec1, const ImVec3& vec2)
+{
+    return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
 }
 
 static inline ImVec3 ImVec3Cross(const ImVec3& vec1, const ImVec3& vec2)
@@ -295,6 +313,52 @@ static bool PointInTriangle(const ImVec2& edgeA, const ImVec2& edgeB, const ImVe
     bool areaCA = ImVec2SignedTriangleArea(edgeC, edgeA, point);
 
     return areaAB == areaBC && areaBC == areaCA;
+}
+
+// Helpers: General math functions
+static inline ImVec3 LinePlaneIntersectionPosition(
+    const ImVec3& linePos,
+    const ImVec3& lineDir,
+    const ImVec3& planePos,
+    const ImVec3& planeDir
+)
+{
+    const float denominator = ImVec3Dot(planeDir, lineDir);
+    if (std::abs(denominator) < FLT_EPSILON) {
+        return ImVec3();
+    }
+
+    const float t = ImVec3Dot(planeDir, (planePos - linePos)) / denominator;
+    return linePos + (lineDir * t);
+}
+
+static inline ImVec3 CalculateCameraRayDirection(
+    const ImVec2& mousePos
+)
+{
+    ImMat44& viewMatrix = *ImGizmo::GetCurrentContext()->currentSpace.viewMatrix;
+    ImMat44& projMatrix = *ImGizmo::GetCurrentContext()->currentSpace.projMatrix;
+    ImMat44 inverseViewProjMatrix = ImMat44Invert(ImMat44Multiplication(viewMatrix, projMatrix));
+
+    const auto& max = GImGizmo->currentSpace.frameRect.Max;
+    const auto& min = GImGizmo->currentSpace.frameRect.Min;
+
+    const float mouseX = ((mousePos.x - min.x) / max.x) * 2.f - 1.f;
+    const float mouseY = (1.f - (mousePos.y - min.y) / max.y) * 2.f - 1.f;
+
+    const float near = 0.1f;
+    const float far = 1.f;
+
+    ImVec4 origin = ImVec4Transform(ImVec4(mouseX, mouseY, near, 1.f), inverseViewProjMatrix);
+    float scaleW = 1.f / origin.w;
+    origin = ImVec4(origin.x * scaleW, origin.y * scaleW, origin.z * scaleW, origin.w * scaleW);
+
+    ImVec4 end = ImVec4Transform(ImVec4(mouseX, mouseY, far, 1.f), inverseViewProjMatrix);
+    scaleW = 1.f / end.w;
+    end = ImVec4(end.x * scaleW, end.y * scaleW, end.z * scaleW, end.w * scaleW);
+
+    ImVec4 dir = end - origin;
+    return ImVec3Normalize(ImVec3(dir.x, dir.y, dir.z));
 }
 
 namespace ImGizmo
@@ -923,6 +987,15 @@ namespace ImGizmo
         ImVec2 pos1 = Convert3DTo2D(*value);
         ImVec2 pos1ToMouse = mousePos - pos1;
         ImVec2 pos1ToDelta = deltaPos - pos1;
+
+        ImVec3 PointOnLine = ImVec3(ImGizmo::GetCurrentContext()->currentSpace.cameraPos);
+        ImVec3 LineDirection = ImVec3();
+        ImVec3 PointOnPlane = ImVec3(0.f, 0.f, 0.f);
+        ImVec3 PlaneNormal = centerPos;
+
+        const ImVec3 Denominator2 = ImVec3Cross(PlaneNormal, (PointOnPlane - PointOnLine));
+        const ImVec3 IntersectionPoint = PointOnLine + (LineDirection * Denominator2);
+
         if (xAxis)
         {
             ImVec2 pos2 = Convert3DTo2D(pos + ImVec3Normalize(left));
