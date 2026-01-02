@@ -5,8 +5,61 @@
 
 ImGizmo is a Dear ImGui extension that focusing on giving the library the functionality to draw gizmos that are needed for scene manipulation, for both 3D and 2D. ImGizmo strives for great UX and bases most of its functionality and usability on the great work by [Robin-Yann Storm](https://rystorm.com/blog/translate-gizmo-design).
 
+---
+
 ## Usage
 To start using ImGizmo inside of your project you just have to include ``ImGizmo.h`` inside of your project after including ``imgui.h``.
+
+Then same as ImGui you have to create the global context and at the end destroy it by calling.
+```c++
+// For creation
+ImGizmo::CreateContext();
+
+// ... Your entire codebase in between
+
+// For destroying
+ImGizmo::DestroyContext();
+```
+
+### ImGizmoSpace
+
+ImGizmo works on the principle of 'Spaces', these are
+
+You can start and end a ImGizmo 'Space' by calling
+```c++
+// For beginning a space
+ImGizmo::Begin();
+
+// And for ending the current space
+ImGizmo::End();
+
+// Usual code
+if (ImGizmo::Begin("Cool Space", YOUR_VIEW_MATRIX, YOUR_TRANSFORM_MATRIX))
+{
+    //...Gizmo drawing
+    ImGizmo::End();
+}
+```
+
+### Gizmos
+
+ImGizmo currently can draw the following gizmos:
+
+- ``GizmoTranslate``
+
+- ``GizmoRotateEuler`` / ``GizmoRotateQuat``
+
+- ``GizmoScale``
+
+- ``GizmoPoint``
+
+### Styling
+
+***~WIP~***
+
+*Planned to be able to choose your own colors and sizes for all gizmos*
+
+---
 
 ## Examples
 
@@ -26,7 +79,3 @@ xmake run
 ## License
 
 ImGizmo, just like Dear ImGui makes use of the MIT license see LICENSE.txt for more information
-
-## Get involved
-
-If you are interested in making ImGizmo better, either by reporting a bug or by requesting a feature. Please [take a look at the contribution guide](CONTRIBUTING.md).
