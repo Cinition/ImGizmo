@@ -7,6 +7,8 @@ ImGizmo is a Dear ImGui extension that focusing on giving the library the functi
 
 ---
 
+Depends on ImGui v1.92+
+
 ## Usage
 To start using ImGizmo inside of your project you just have to include ``ImGizmo.h`` inside of your project after including ``imgui.h``.
 

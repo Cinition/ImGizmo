@@ -68,15 +68,16 @@ namespace ImGizmo
         ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
 
         if(ImGui::Begin(id, NULL, flags)) {
-            const ImGuiWindow* window = g.CurrentWindow;
-
             ImGizmoSpace* currentSpace = new ImGizmoSpace();
             currentSpace->viewMatrix = (ImGizmoMatrix*)viewMatrix;
             currentSpace->projMatrix = (ImGizmoMatrix*)projectionMatrix;
-            currentSpace->drawList = window->DrawList;
-            currentSpace->frameRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + ImGui::GetMainViewport()->Size);
+            currentSpace->drawList = ImGui::GetCurrentWindow()->DrawList;
+            currentSpace->frameRect = ImRect(ImGui::GetCurrentWindow()->DC.CursorPos, ImGui::GetCurrentWindow()->DC.CursorPos + ImGui::GetMainViewport()->Size);
 
             gz.currentSpace = currentSpace;
+
+            currentSpace->imGizmoDrawList._drawListFlags = ImGui::GetCurrentWindow()->DrawList->Flags;
+            currentSpace->imGizmoDrawList._sharedData = ImGui::GetDrawListSharedData();
 
             ImGui::End();
             return true;
@@ -92,10 +93,109 @@ namespace ImGizmo
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
         ImGizmoContext& gz = *GImGizmo;
-        ImDrawList& drawList = *gz.currentSpace->drawList;
+        ImGizmoDrawList& drawList = gz.currentSpace->imGizmoDrawList;
 
         const char* activeID = gz.currentSpace->activeID;
-        const char* hoverID = (activeID != nullptr ? gz.currentSpace.hoverID : nullptr);
+        const char* hoverID = (activeID != nullptr ? gz.currentSpace->hoverID : nullptr);
+
+        drawList.PushToDrawList(gz.currentSpace->drawList);
+        drawList.Reset();
+
+        delete GImGizmo->currentSpace;
+        GImGizmo->currentSpace = nullptr;
+    }
+
+    void PushPositionOffset(const float x, const float y, const float z)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        GImGizmo->positionOffsets.push_back(ImGizmoVec3(x, y, z));
+    }
+
+    void PopPositionOffset()
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        IM_ASSERT_USER_ERROR(!GImGizmo->positionOffsets.empty(), "You are trying to pop on empty PositionOffsets vector");
+
+        GImGizmo->positionOffsets.pop_back();
+    }
+
+    void PushEulerRotationOffset(const float x, const float y, const float z)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        GImGizmo->rotationOffsets.push_back(ImGizmoQuaternion::FromEuler(x, y, z));
+    }
+
+    void PushQuatRotationOffset(const float x, const float y, const float z, const float w)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        GImGizmo->rotationOffsets.push_back(ImGizmoQuaternion(x, y, z, w));
+    }
+
+    void PopRotationOffset()
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        IM_ASSERT_USER_ERROR(!GImGizmo->rotationOffsets.empty(), "You are trying to pop on empty RotationOffsets vector");
+
+        GImGizmo->rotationOffsets.pop_back();
+    }
+
+    void GizmoTranslate(const char* id, float* x, float* y, float* z)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+
+        ImRect rect = GImGizmo->currentSpace->frameRect;
+        ImGizmoDrawList& drawlist = GImGizmo->currentSpace->imGizmoDrawList;
+        ImVec2 mid = {rect.GetWidth() / 2.f, rect.GetHeight() / 2.f};
+        drawlist.ReserveMesh(3,3);
+        drawlist._vertWritePtr[0].pos.x = mid.x + -100.f;
+        drawlist._vertWritePtr[0].pos.y = mid.y + 100.f;
+        drawlist._vertWritePtr[0].uv = drawlist._sharedData->TexUvWhitePixel;
+        drawlist._vertWritePtr[0].col = ImGui::GetColorU32({0, 0, 1, 1});
+        drawlist._vertWritePtr[1].pos.x = mid.x + 100.f;
+        drawlist._vertWritePtr[1].pos.y = mid.y + 100.f;
+        drawlist._vertWritePtr[1].uv = drawlist._sharedData->TexUvWhitePixel;
+        drawlist._vertWritePtr[1].col = ImGui::GetColorU32({0, 1, 0, 1});
+        drawlist._vertWritePtr[2].pos.x = mid.x;
+        drawlist._vertWritePtr[2].pos.y = mid.y + -100.f;
+        drawlist._vertWritePtr[2].uv = drawlist._sharedData->TexUvWhitePixel;
+        drawlist._vertWritePtr[2].col = ImGui::GetColorU32({1, 0, 0, 1});
+        drawlist._vertWritePtr += 3;
+        drawlist._idxWritePtr[0] = (ImDrawIdx)(drawlist._vertCurrentIdx);
+        drawlist._idxWritePtr[1] = (ImDrawIdx)(drawlist._vertCurrentIdx + 1);
+        drawlist._idxWritePtr[2] = (ImDrawIdx)(drawlist._vertCurrentIdx + 2);
+        drawlist._idxWritePtr += 3;
+        drawlist._vertCurrentIdx += 3;
+        drawlist._zWritePtr[0] = 1.f;
+        drawlist._zWritePtr += 1;
+    }
+
+    void GizmoRotateEuler(const char* id, float* x, float* y, float* z)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+    }
+
+    void GizmoRotateQuat(const char* id, float* x, float* y, float* z, float* w)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
+    }
+
+    void GizmoScale(const char* id, float* x, float* y, float* z)
+    {
+        IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
+        IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
     }
 };
 
@@ -331,6 +431,91 @@ ImGizmoMatrix ImGizmoMatrix::Invert() const
     return mat;
 }
 
+ImGizmoQuaternion ImGizmoQuaternion::FromEuler(const float x, const float y, const float z)
+{
+    //TODO
+    return ImGizmoQuaternion(x, y, z, 0.0f);
+}
+
+void ImGizmoDrawList::PushToDrawList(ImDrawList* output)
+{
+    const int triCount = this->zBuffer.Size;
+    if (triCount == 0)
+    {
+        this->Reset();
+        return;
+    }
+
+    struct TriRef {
+        double z;
+        int triIdx;
+    };
+    TriRef* tris = (TriRef*)IM_ALLOC(sizeof(TriRef) * triCount);
+    for (int i = 0; i < triCount; i++) {
+        tris[i].z = this->zBuffer[i];
+        tris[i].triIdx = i;
+    }
+
+    ImQsort(tris, (size_t)triCount, sizeof(TriRef), [](const void* a, const void* b) {
+        double za = ((const TriRef*)a)->z;
+        double zb = ((const TriRef*)b)->z;
+        return (za < zb) ? -1 : (za > zb) ? 1 : 0;
+    });
+
+    output->PrimReserve(this->idxBuffer.Size, this->vertBuffer.Size);
+
+    memcpy(output->_VtxWritePtr, this->vertBuffer.Data, this->vertBuffer.Size * sizeof(ImDrawVert));
+    unsigned int idxOffset = output->_VtxCurrentIdx;
+    output->_VtxWritePtr += this->vertBuffer.Size;
+    output->_VtxWritePtr += this->vertBuffer.Size;
+
+    unsigned int maxIndex = this->MaxIdx() - idxOffset;
+
+    ImDrawIdx* idxOutBegin = output->_IdxWritePtr;
+    ImDrawIdx* idxOut = idxOutBegin;
+    ImDrawIdx* idxIn = this->idxBuffer.Data;
+    for (unsigned int i = 0; i < triCount; i++)
+    {
+        int triIdx = tris[i].triIdx;
+        int baseIdx = triIdx * 3;
+
+        unsigned int i0 = idxIn[baseIdx];
+        unsigned int i1 = idxIn[baseIdx + 1];
+        unsigned int i2 = idxIn[baseIdx + 2];
+
+        if (i0 > maxIndex || i1 > maxIndex || i2 > maxIndex)
+        {
+            break;
+        }
+
+        idxOut[0] = (ImDrawIdx)(i0 + idxOffset);
+        idxOut[1] = (ImDrawIdx)(i1 + idxOffset);
+        idxOut[2] = (ImDrawIdx)(i2 + idxOffset);
+
+        idxOut += 3;
+    }
+    ImDrawIdx* idxOutEnd = idxOut;
+    output->_IdxWritePtr = idxOutEnd;
+
+    Reset();
+
+    IM_FREE(tris);
+}
+
+void ImGizmoDrawList::ReserveMesh(int idxCount, int vertCount)
+{
+    int vertBufferSize = this->vertBuffer.Size;
+    this->vertBuffer.resize(vertBufferSize + vertCount);
+    this->_vertWritePtr = this->vertBuffer.Data + vertBufferSize;
+
+    int idxBufferSize = this->idxBuffer.Size;
+    this->idxBuffer.resize(idxBufferSize + idxCount);
+    this->_idxWritePtr = this->idxBuffer.Data + idxBufferSize;
+
+    int zBufferSize = this->zBuffer.Size;
+    this->zBuffer.resize(zBufferSize + idxCount / 3);
+    this->_zWritePtr = this->zBuffer.Data + zBufferSize;
+}
 
 
 

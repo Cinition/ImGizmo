@@ -3,23 +3,10 @@
 
 struct ImGizmoMatrix;
 struct ImGizmoVec3;
-
-//-----------------------------------------------------------------------------
-// [SECTION] ImGizmoSpace
-//-----------------------------------------------------------------------------
-
-struct ImGizmoSpace
-{
-    ImGuiID ID;
-    ImGizmoMatrix* viewMatrix;
-    ImGizmoMatrix* projMatrix;
-    ImDrawList* drawList;
-    ImRect frameRect;
-    const char* hoverID = nullptr;
-    const char* activeID = nullptr;
-    float nearClip = 0.1f;
-    float farClip = 100.0f;
-};
+struct ImGizmoQuaternion;
+struct ImGizmoDrawList;
+struct ImGizmo3DBox;
+struct ImGizmoSpace;
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImGizmoContext
@@ -28,6 +15,8 @@ struct ImGizmoSpace
 struct ImGizmoContext
 {
     ImGizmoSpace* currentSpace;
+    ImVector<ImGizmoVec3> positionOffsets;
+    ImVector<ImGizmoQuaternion> rotationOffsets;
 };
 
 struct ImGizmoVec3 {
@@ -69,17 +58,6 @@ struct ImGizmoVec3 {
 };
 
 struct ImGizmoMatrix {
-    // Row major
-    // [ 11 12 13 14 ] 0 => 3
-    // [ 21 22 23 24 ] 4 => 7
-    // [ 31 32 33 34 ] 8 => 11
-    // [ 41 42 43 44 ] 12 => 15
-
-    // [ 00 01 02 03 ] 0 1 2 3
-    // [ 10 11 12 13 ] 4 5 6 7
-    // [ 20 21 22 23 ] 8 9 10 11
-    // [ 30 31 32 33 ] 12 13 14 15
-
     float m[16];
 
     ImGizmoMatrix() {
@@ -125,4 +103,70 @@ struct ImGizmoMatrix {
 
     IMGIZMO_API ImGizmoVec3 Transform(const ImGizmoVec3& rhs, float w) const;
     IMGIZMO_API ImGizmoMatrix Invert() const;
+};
+
+struct ImGizmoQuaternion
+{
+    float x, y, z, w;
+
+    ImGizmoQuaternion() : x(0.f), y(0.f), z(0.f), w(0.f) {}
+    ImGizmoQuaternion(const float _x, const float _y, const float _z, const float _w) : x(_x), y(_y), z(_z), w(_w) {}
+
+    static ImGizmoQuaternion FromEuler(const float x, const float y, const float z);
+};
+
+struct ImGizmoDrawList
+{
+    ImVector<ImDrawIdx> idxBuffer;
+    ImVector<ImDrawVert> vertBuffer;
+    ImVector<double> zBuffer;
+    unsigned int _vertCurrentIdx;
+    ImDrawVert* _vertWritePtr;
+    ImDrawIdx* _idxWritePtr;
+    double* _zWritePtr;
+    ImDrawListFlags _drawListFlags;
+    ImDrawListSharedData* _sharedData;
+
+    ImGizmoDrawList()
+    {
+        _drawListFlags = ImDrawListFlags_None;
+        _sharedData = nullptr;
+        Reset();
+    }
+
+    void PushToDrawList(ImDrawList* output);
+
+    void ReserveMesh(int idxCount, int vertCount);
+    void RevokeMesh(int idxCount, int vertCount);
+
+    void Reset()
+    {
+        idxBuffer.clear();
+        vertBuffer.clear();
+        zBuffer.clear();
+        _vertCurrentIdx = 0;
+        _vertWritePtr = vertBuffer.Data;
+        _idxWritePtr = idxBuffer.Data;
+        _zWritePtr = zBuffer.Data;
+    }
+
+    constexpr static unsigned int MaxIdx() { return sizeof(ImDrawIdx) == 2 ? 65535 : 4294967295; }
+};
+
+//-----------------------------------------------------------------------------
+// [SECTION] ImGizmoSpace
+//-----------------------------------------------------------------------------
+
+struct ImGizmoSpace
+{
+    ImGuiID ID;
+    ImGizmoMatrix* viewMatrix;
+    ImGizmoMatrix* projMatrix;
+    ImDrawList* drawList;
+    ImGizmoDrawList imGizmoDrawList;
+    ImRect frameRect;
+    const char* hoverID = nullptr;
+    const char* activeID = nullptr;
+    float nearClip = 0.1f;
+    float farClip = 100.0f;
 };

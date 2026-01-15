@@ -42,18 +42,23 @@ namespace ImGizmo {
     void End();
 
 //-----------------------------------------------------------------------------
-// [SECTION] Begin/End Space
+// [SECTION] Gizmo variable functions
 //-----------------------------------------------------------------------------
 
     void PushPositionOffset(const float x, const float y, const float z);
-    void PushRotationOffset(const float x, const float y, const float z);
+    void PopPositionOffset();
+
+    void PushEulerRotationOffset(const float x, const float y, const float z);
+    void PushQuatRotationOffset(const float x, const float y, const float z, const float w);
+    void PopRotationOffset();
 
 //-----------------------------------------------------------------------------
-// [SECTION] Begin/End Space
+// [SECTION] Gizmo Functions
 //-----------------------------------------------------------------------------
 
-    void GizmoTranslate(float* x, float* y, float* z);
-    void GizmoRotateEuler(float* x, float* y, float* z);
-    void GizmoRotateQuat(float* x, float* y, float* z, float* w);
-    void GizmoScale(float* x, float* y, float* z);
+    void GizmoPoint(const char* id, const float* x, const float* y, const float* z);
+    void GizmoTranslate(const char* id, float* x, float* y, float* z);
+    void GizmoRotateEuler(const char* id, float* x, float* y, float* z);
+    void GizmoRotateQuat(const char* id, float* x, float* y, float* z, float* w);
+    void GizmoScale(const char* id, float* x, float* y, float* z);
 }
