@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -38,14 +38,21 @@
         m16[15] = f[15];            \
     }                               \
 
-#define IM_VEC3_CLASS_EXTRA \
-    ImVec3(glm::vec3* v) {  \
-        x = v->x;           \
-        y = v->y;           \
-        z = v->z;           \
-    }                       \
+#define IM_VEC3_CLASS_EXTRA       \
+    ImVec3(const glm::vec3& v) {  \
+        x = v.x;                  \
+        y = v.y;                  \
+        z = v.z;                  \
+    }                             \
+    ImVec3(glm::vec3* v) {        \
+        x = v->x;                 \
+        y = v->y;                 \
+        z = v->z;                 \
+    }                             \
 
 #include <ImGizmo.h>
+
+#include "imgizmo_internal.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 
@@ -150,6 +157,13 @@ void errorCallBack(int error, const char* desc) {
     std::printf("Error: %s\n", desc);
 }
 
+float cameraDistance = 10.f;
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+{
+    float value = cameraDistance - yOffset;
+    cameraDistance = (value < 1.f ? 1.f : (value > 50.f ? 50.f : value));
+}
+
 int main(int argc, char** argv) {
     if(!glfwInit())
     {
@@ -171,8 +185,9 @@ int main(int argc, char** argv) {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
+    glfwSetScrollCallback(window, scrollCallback);
 
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if(!gladLoadGL(glfwGetProcAddress))
     {
         std::printf("Failed to initialize GLAD");
         exit(EXIT_FAILURE);
@@ -233,19 +248,22 @@ int main(int argc, char** argv) {
 
         glm::mat4 view = glm::mat4(1.f);
         glm::mat4 proj = glm::mat4(1.f);
-        view = glm::translate(view, glm::vec3(0.f, 0.f, -10.f));
         proj = glm::perspective(glm::radians(45.f), 1.778f, 0.1f, 100.f);
+
+        static glm::vec3 cameraPos = glm::vec3(3.f, 3.f, 3.f);
 
         // Update scene
         {
             ImGuiIO& io = ImGui::GetIO();
-            handleMouseInput = !(io.WantCaptureMouse || ImGizmo::IsUsing());
-
-            glm::mat4 rot = glm::mat4(1.f);
+            handleMouseInput = !(io.WantCaptureMouse);
 
             // Mouse camera rotation
-            static glm::vec2 rotation     = glm::vec2(0.f);
+            static glm::vec2 rotation     = glm::vec2(glm::radians(-135.f), glm::radians(32.5f));
             static glm::vec2 lastMousePos = glm::vec2(0.f);
+
+            static glm::vec3 cameraFront = glm::vec3(0.f, 0.f, -1.f);
+            static glm::vec3 cameraUp = glm::vec3(0.f, 1.f, 0.f);
+            float cameraSpeed = 3.f;
 
             double xPos, yPos;
             glfwGetCursorPos(window, &xPos, &yPos);
@@ -253,21 +271,47 @@ int main(int argc, char** argv) {
             if(handleMouseInput) {
                 if( glfwGetMouseButton(window, 0) == GLFW_PRESS) {
                     glm::vec2 relativePos = lastMousePos - mousePos;
-                    rotation += (relativePos * 0.005f) * glm::vec2(-1.f, -1.f);
+                    rotation += (relativePos * 0.0035f) * glm::vec2(-1.f, -1.f);
+                }
+
+                if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+                    cameraSpeed = 5.f;
+                }
+                if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+                    cameraPos += cameraSpeed * cameraFront * io.DeltaTime;
+                }
+                if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+                    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * io.DeltaTime;
+                }
+                if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+                    cameraPos -= cameraSpeed * cameraFront * io.DeltaTime;
+                }
+                if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+                    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * io.DeltaTime;
+                }
+                if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                    cameraPos += cameraUp * cameraSpeed * io.DeltaTime;
+                }
+                if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+                    cameraPos -= cameraUp * cameraSpeed * io.DeltaTime;
                 }
             }
+
             lastMousePos.x = static_cast<float>(xPos);
             lastMousePos.y = static_cast<float>(yPos);
 
-            rot = glm::rotate(rot, rotation.y, glm::vec3(1.f, 0.f, 0.f));
-            rot = glm::rotate(rot, rotation.x, glm::vec3(0.f, 1.f, 0.f));
-            view = view * rot;
+            glm::vec3 direction;
+            direction.x = cos(rotation.x) * cos(-rotation.y);
+            direction.y = sin(-rotation.y);
+            direction.z = sin(rotation.x) * cos(-rotation.y);
+            cameraFront = glm::normalize(direction);
+
+            view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         }
 
         // Render Scene
         {
-            if(renderScene)
-            {
+            if (renderScene) {
                 int viewMatrixLocation = glGetUniformLocation(shader.ID, "view");
                 glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -301,8 +345,19 @@ int main(int argc, char** argv) {
                 ImGui::ShowDemoWindow(&showDemoWindow);
             }
 
-            if(ImGizmo::Begin("ImGizmo Space",view, proj)) {
-                ImGizmo::Translate("Translate", (ImVec3*)&cube1.position);
+            if(ImGizmo::Begin("ImGizmo Space", glm::value_ptr(view), glm::value_ptr(proj)))
+            {
+                //ImGizmo::PushPosition();
+                //ImGizmo::PushRotation();
+
+                //ImGizmo::PopPosition();
+                //ImGizmo::PopRotation();
+
+                float x1 = 0;
+
+                ImGizmo::GizmoTranslate("test", &x1, &x1, &x1);
+                //ImGizmo::Rotate();
+                //ImGizmo::Scale();
                 ImGizmo::End();
             }
 
@@ -362,6 +417,7 @@ int main(int argc, char** argv) {
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
+
         glfwSwapBuffers(window);
     }
 
