@@ -149,37 +149,25 @@ namespace ImGizmo
         IM_ASSERT_USER_ERROR(GImGizmo != nullptr, "Current context is empty. Did you call ImGizmo::CreateContext()?");
         IM_ASSERT_USER_ERROR(GImGizmo->currentSpace != nullptr, "You are trying call a function inside an ImGizmo space, but its empty. You can create a ImGizmo space with ImGizmo::Begin");
 
+        ImGizmoVec3 pos = ImGizmoVec3(*x, *y, *z);
+
         ImRect rect = GImGizmo->currentSpace->frameRect;
         ImGizmoDrawList& drawlist = GImGizmo->currentSpace->imGizmoDrawList;
 
         // point
+        AddPoint("GizmoPoint", pos, 0.5f, ImGui::GetColorU32(ImVec4(1.f, 1.f, 1.f, 1.f)));
 
-        // arrow   Up
+        // arrow Up
+        ImGizmoVec3 upDir = ImGizmoVec3(0.f, 1.f, 0.f);
+        AddGizmoArrow("GizmoArrowUp", pos, upDir, ImGui::GetColorU32(ImVec4(0.f, 1.f, 0.f, 1.f)));
+
         // arrow Left
-        // arrow   At
-        
-        ImVec2 mid = {rect.GetWidth() / 2.f, rect.GetHeight() / 2.f};
-        drawlist.ReserveMesh(3,3);
-        drawlist._vertWritePtr[0].pos.x = mid.x + -100.f;
-        drawlist._vertWritePtr[0].pos.y = mid.y + 100.f;
-        drawlist._vertWritePtr[0].uv = drawlist._sharedData->TexUvWhitePixel;
-        drawlist._vertWritePtr[0].col = ImGui::GetColorU32({0, 0, 1, 1});
-        drawlist._vertWritePtr[1].pos.x = mid.x + 100.f;
-        drawlist._vertWritePtr[1].pos.y = mid.y + 100.f;
-        drawlist._vertWritePtr[1].uv = drawlist._sharedData->TexUvWhitePixel;
-        drawlist._vertWritePtr[1].col = ImGui::GetColorU32({0, 1, 0, 1});
-        drawlist._vertWritePtr[2].pos.x = mid.x;
-        drawlist._vertWritePtr[2].pos.y = mid.y + -100.f;
-        drawlist._vertWritePtr[2].uv = drawlist._sharedData->TexUvWhitePixel;
-        drawlist._vertWritePtr[2].col = ImGui::GetColorU32({1, 0, 0, 1});
-        drawlist._vertWritePtr += 3;
-        drawlist._idxWritePtr[0] = (ImDrawIdx)(drawlist._vertCurrentIdx);
-        drawlist._idxWritePtr[1] = (ImDrawIdx)(drawlist._vertCurrentIdx + 1);
-        drawlist._idxWritePtr[2] = (ImDrawIdx)(drawlist._vertCurrentIdx + 2);
-        drawlist._idxWritePtr += 3;
-        drawlist._vertCurrentIdx += 3;
-        drawlist._zWritePtr[0] = 1.f;
-        drawlist._zWritePtr += 1;
+        ImGizmoVec3 leftDir = ImGizmoVec3(1.f, 0.f, 0.f);
+        AddGizmoArrow("GizmoArrowLeft", pos, upDir, ImGui::GetColorU32(ImVec4(1.f, 0.f, 0.f, 1.f)));
+
+        // arrow At
+        ImGizmoVec3 atDir = ImGizmoVec3(0.f, 0.f, 1.f);
+        AddGizmoArrow("GizmoArrowAt", pos, upDir, ImGui::GetColorU32(ImVec4(0.f, 0.f, 1.f, 1.f)));
     }
 
     void GizmoRotateEuler(const char* id, float* x, float* y, float* z)

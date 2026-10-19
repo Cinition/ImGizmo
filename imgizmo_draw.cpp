@@ -323,3 +323,32 @@ void ImGizmoDrawList::ReserveMesh(int idxCount, int vertCount)
     this->zBuffer.resize(zBufferSize + idxCount / 3);
     this->_zWritePtr = this->zBuffer.Data + zBufferSize;
 }
+
+void ImGizmoDrawList::AddPoint(const char* id, ImGizmoVec3 position, float radius, ImU32 color, int numSegments)
+{
+    // ImVec2 mid = {rect.GetWidth() / 2.f, rect.GetHeight() / 2.f};
+    // drawlist.ReserveMesh(3,3);
+    // drawlist._vertWritePtr[0].pos.x = mid.x + -100.f;
+    // drawlist._vertWritePtr[0].pos.y = mid.y + 100.f;
+    // drawlist._vertWritePtr[0].uv = drawlist._sharedData->TexUvWhitePixel;
+    // drawlist._vertWritePtr[0].col = ImGui::GetColorU32({0, 0, 1, 1});
+    // drawlist._vertWritePtr[1].pos.x = mid.x + 100.f;
+    // drawlist._vertWritePtr[1].pos.y = mid.y + 100.f;
+    // drawlist._vertWritePtr[1].uv = drawlist._sharedData->TexUvWhitePixel;
+    // drawlist._vertWritePtr[1].col = ImGui::GetColorU32({0, 1, 0, 1});
+    // drawlist._vertWritePtr[2].pos.x = mid.x;
+    // drawlist._vertWritePtr[2].pos.y = mid.y + -100.f;
+    // drawlist._vertWritePtr[2].uv = drawlist._sharedData->TexUvWhitePixel;
+    // drawlist._vertWritePtr[2].col = ImGui::GetColorU32({1, 0, 0, 1});
+    // drawlist._vertWritePtr += 3;
+    // drawlist._idxWritePtr[0] = (ImDrawIdx)(drawlist._vertCurrentIdx);
+    // drawlist._idxWritePtr[1] = (ImDrawIdx)(drawlist._vertCurrentIdx + 1);
+    // drawlist._idxWritePtr[2] = (ImDrawIdx)(drawlist._vertCurrentIdx + 2);
+    // drawlist._idxWritePtr += 3;
+    // drawlist._vertCurrentIdx += 3;
+    // drawlist._zWritePtr[0] = 1.f;
+    // drawlist._zWritePtr += 1;
+    
+}
+
+void ImGizmoDrawList::AddGizmoArrow(const char* id, ImGizmoVec3 position, ImGizmoVec3 rotation, ImU32 color) {}

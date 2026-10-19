@@ -171,6 +171,8 @@ struct ImGizmoDrawList
         Reset();
     }
 
+    constexpr static unsigned int MaxIdx() { return sizeof(ImDrawIdx) == 2 ? 65535 : 4294967295; }
+
     void PushToDrawList(ImDrawList* output);
 
     void ReserveMesh(int idxCount, int vertCount);
@@ -187,7 +189,8 @@ struct ImGizmoDrawList
         _zWritePtr = zBuffer.Data;
     }
 
-    constexpr static unsigned int MaxIdx() { return sizeof(ImDrawIdx) == 2 ? 65535 : 4294967295; }
+    IMGIZMO_API void AddPoint(const char* id, ImGizmoVec3 position, float radius, ImU32 color, int numSegments);
+    IMGIZMO_API void AddGizmoArrow(const char* id, ImGizmoVec3 position, ImGizmoVec3 rotation, ImU32 color);
 };
 
 //-----------------------------------------------------------------------------
