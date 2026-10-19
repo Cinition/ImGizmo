@@ -50,7 +50,7 @@
         z = v->z;                 \
     }                             \
 
-#include <ImGizmo.h>
+#include <imgizmo.h>
 
 #include "imgizmo_internal.h"
 
